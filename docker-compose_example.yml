@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  nginx:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock 
+      - ./nginx-ssl/certs:/etc/nginx/certs 
+      - ./nginx-ssl/html:/usr/share/nginx/html
+
+  letsencrypt:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    depends_on:
+      - nginx
+    volumes_from:
+      - nginx
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./nginx-ssl/certs:/etc/nginx/certs
+      - ./nginx-ssl/acme:/etc/acme.sh
+    environment:
+      - DEFAULT_EMAIL=(your email)
+
+  line-bot:
+    build: .
+    container_name: line-bot
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/linebot
+    depends_on:
+      - letsencrypt
+    command: ["poetry", "run", "uvicorn", "get_chat_id:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      - VIRTUAL_HOST=(your domain)
+      - VIRTUAL_PORT=8000
+      - LETSENCRYPT_HOST=(your domain)
+      - LETSENCRYPT_EMAIL=(your email)
+      - LINE_CHANNEL_ACCESS_TOKEN=(your channel access token)
+      - LINE_CHANNEL_SECRET=(your channel secret)
