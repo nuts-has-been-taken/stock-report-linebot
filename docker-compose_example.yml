@@ -34,7 +34,7 @@ services:
       - .:/linebot
     depends_on:
       - letsencrypt
-    command: ["poetry", "run", "uvicorn", "get_chat_id:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       - VIRTUAL_HOST=(your domain)
       - VIRTUAL_PORT=8000

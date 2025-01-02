@@ -1,23 +1,28 @@
-from linebot import LineBotApi
-from linebot.models import TextSendMessage
-from dotenv import load_dotenv
-import os
+from fastapi import FastAPI, Request
+from linebot.models import MessageEvent, TextMessage
+from linebot.exceptions import InvalidSignatureError
 
-load_dotenv()
+from app.controller.line import handle_msg
+from app.core.config import line_bot
 
-LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+app = FastAPI()
 
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+handler = line_bot.LINE_WEBHOOK
 
-USER_ID = '用戶的_LINE_USER_ID'
+@app.get("/")
+def read_root():
+    return {"message": "Stock line bot service is running!"}
 
-def push_message(user_id, message):
+@app.post("/callback")
+async def callback(request: Request):
+    signature = request.headers['X-Line-Signature']
+    body = await request.body()
     try:
-        line_bot_api.push_message(user_id, TextSendMessage(text=message))
-        print("訊息已發送")
-    except Exception as e:
-        print(f"發送失敗: {e}")
+        handler.handle(body.decode('utf-8'), signature)
+    except InvalidSignatureError:
+        return "Invalid signature", 400
+    return "OK"
 
-if __name__ == "__main__":
-    message = "這是一則單向推播訊息！"
-    push_message(USER_ID, message)
+@handler.add(MessageEvent, message=TextMessage)
+def recieve_msg(event:MessageEvent):
+    handle_msg(event=event)

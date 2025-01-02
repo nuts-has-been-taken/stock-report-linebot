@@ -8,9 +8,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 line-bot-sdk = "^3.14.2"
-python-dotenv = "^1.0.1"
 fastapi = "^0.115.6"
 uvicorn = "^0.34.0"
+pydantic = "^2.10.4"
+pydantic-settings = "^2.7.1"
 
 
 [build-system]
