@@ -20,3 +20,14 @@ class LineBot():
         self.LINE_WEBHOOK = WebhookHandler(settings.LINE_CHANNEL_SECRET)
 
 line_bot = LineBot()
+
+class Postgres(BaseSettings):
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_HOST: str = "your_host"
+    POSTGRES_POST: str = "your_port"
+    class Config:
+        env_file = ".env"
+        
+postgress_settings = Postgres()

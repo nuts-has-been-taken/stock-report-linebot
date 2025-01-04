@@ -40,5 +40,15 @@ services:
       - VIRTUAL_PORT=8000
       - LETSENCRYPT_HOST=(your domain)
       - LETSENCRYPT_EMAIL=(your email)
-      - LINE_CHANNEL_ACCESS_TOKEN=(your channel access token)
-      - LINE_CHANNEL_SECRET=(your channel secret)
+  
+  postgres:
+    image: postgres:latest
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: your_user
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: linebot
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
