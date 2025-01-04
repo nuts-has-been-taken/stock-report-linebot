@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request
-from linebot.models import MessageEvent, TextMessage
+from linebot.models import MessageEvent, TextMessage, FollowEvent, JoinEvent
 from linebot.exceptions import InvalidSignatureError
 
-from app.controller.line import handle_msg
+from app.controller.line import handle_msg, handle_join, handle_follow
 from app.core.config import line_bot
 
 app = FastAPI()
@@ -26,3 +26,11 @@ async def callback(request: Request):
 @handler.add(MessageEvent, message=TextMessage)
 def recieve_msg(event:MessageEvent):
     handle_msg(event=event)
+    
+@handler.add(JoinEvent)
+def new_join(event:JoinEvent):
+    handle_join(event=event)
+
+@handler.add(FollowEvent)
+def new_follow(event:FollowEvent):
+    handle_follow(event=event)

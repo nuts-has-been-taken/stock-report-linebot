@@ -1,4 +1,7 @@
-from linebot.models import MessageEvent
+from linebot.models import MessageEvent, JoinEvent, FollowEvent
+
+from app.service.line import register_user
+from app.util.line import get_event_id
 
 def handle_msg(event:MessageEvent):
     """Handle message event from Line bot
@@ -7,19 +10,24 @@ def handle_msg(event:MessageEvent):
         event (MessageEvent): Message event from Line bot
     """
     if event.message.text == "註冊":
-        pass
+        register_user(event=event)
     elif event.message.text == "":
         pass
+
+def handle_join(event:JoinEvent):
+    """Handle join event from Line bot
+
+    Args:
+        event (JoinEvent): Join event from Line bot
+    """
+    event_id = get_event_id(event)
+    pass
         
-def register_user(event:MessageEvent):
-    """Register user to database"""
-    
-    if event.source.type == "user":
-        user_id = event.source.user_id
-        print(f"用戶 ID: {user_id}")
-    elif event.source.type == "group":
-        group_id = event.source.group_id
-        print(f"群組 ID: {group_id}")
-    elif event.source.type == "room":
-        room_id = event.source.room_id
-        print(f"聊天室 ID: {room_id}")
+def handle_follow(event:FollowEvent):
+    """Handle follow event from Line bot
+
+    Args:
+        event (FollowEvent): Follow event from Line bot
+    """
+    event_id = get_event_id(event)
+    pass
