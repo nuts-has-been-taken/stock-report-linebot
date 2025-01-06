@@ -1,11 +1,20 @@
 from fastapi import FastAPI, Request
 from linebot.models import MessageEvent, TextMessage, FollowEvent, JoinEvent
 from linebot.exceptions import InvalidSignatureError
+from contextlib import asynccontextmanager
 
 from app.controller.line import handle_msg, handle_join, handle_follow
-from app.core.config import line_bot
+from app.core.config import line_bot, postgress_db
+from app.model.line import Base
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # api start event
+    Base.metadata.create_all(bind=postgress_db.ENGINE)
+    yield
+    # api shut down event
+
+app = FastAPI(lifespan=lifespan)
 
 handler = line_bot.LINE_WEBHOOK
 

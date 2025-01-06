@@ -27,16 +27,17 @@ def get_event_id(event:Event):
         event (MessageEvent): Message event from Line bot
 
     Returns:
+        str: Event type
         str: Event ID
     """
     if event.source.type == "user":
-        return event.source.user_id
+        return event.source.type, event.source.user_id
     elif event.source.type == "group":
-        return event.source.group_id
+        return event.source.type, event.source.group_id
     elif event.source.type == "room":
-        return event.source.room_id
+        return event.source.type, event.source.room_id
     else:
-        return None
+        return None, None
 
 def get_reply_token(event:Event):
     """Get reply token
