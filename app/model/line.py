@@ -11,7 +11,7 @@ class LineUser(Base):
 
     user_id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=True)
-    line_id = Column(String, nullable=False)
+    line_id = Column(String, nullable=False, unique=True)
     line_type = Column(String, nullable=False)
     user_class = Column(String, nullable=True)
     credit = Column(Integer, default=0)

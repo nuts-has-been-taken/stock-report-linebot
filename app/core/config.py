@@ -1,4 +1,5 @@
 from linebot import LineBotApi, WebhookHandler
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -12,7 +13,8 @@ class Settings(BaseSettings):
     LINE_CHANNEL_SECRET: str
     
     class Config:
-        env_file = ".env" 
+        env_file = ".env"
+        extra = "allow"
 
 settings = Settings()
 
@@ -25,9 +27,15 @@ line_bot = LineBot()
 
 class Postgres(BaseSettings):
     POSTGRES_URL: str
-    ENGINE = create_engine(POSTGRES_URL)
-    SESSION = sessionmaker(autocommit=False, autoflush=False, bind=ENGINE)
+
+    @model_validator(mode="after")
+    def init_db(self):
+        self.ENGINE = create_engine(self.POSTGRES_URL)
+        self.SESSION = sessionmaker(autocommit=False, autoflush=False, bind=self.ENGINE)
+        return self
+
     class Config:
         env_file = ".env"
+        extra = "allow"
         
 postgress_db = Postgres()

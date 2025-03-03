@@ -13,6 +13,7 @@ uvicorn = "^0.34.0"
 pydantic = "^2.10.4"
 pydantic-settings = "^2.7.1"
 psycopg2 = "^2.9.10"
+sqlalchemy = "^2.0.38"
 
 
 [build-system]
