@@ -1,5 +1,5 @@
 from app.core.config import postgress_db
-from app.model.line import Report
+from app.model.model import Report
 
 import datetime
 

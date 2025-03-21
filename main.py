@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from app.controller.line import handle_msg, handle_join, handle_follow
 from app.core.config import line_bot, postgress_db
-from app.model.line import Base
+from app.model.model import Base
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

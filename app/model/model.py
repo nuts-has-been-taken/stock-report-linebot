@@ -11,7 +11,7 @@ class ReportType(enum.Enum):
     籌碼 = "籌碼"
     期貨 = "期貨"
 
-# 定義 Report 資料表
+# Report table
 class Report(Base):
     __tablename__ = 'reports'
 
@@ -20,6 +20,15 @@ class Report(Base):
     type = Column(Enum(ReportType), nullable=False)
     msg = Column(String, nullable=False)
     url = Column(String, nullable=False)
+
+# imgur token table
+class ImgurToken(Base):
+    __tablename__ = 'imgur_tokens'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    refresh_token = Column(String, nullable=False)
+    date = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
+    access_token = Column(String, nullable=True)
 
 # Line Users table (deprecated)
 """class LineUser(Base):
