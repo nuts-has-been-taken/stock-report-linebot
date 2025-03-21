@@ -1,4 +1,4 @@
-from linebot.models import TextSendMessage, Event
+from linebot.models import TextSendMessage, Event, ImageSendMessage
 
 from app.core.config import line_bot
 
@@ -11,14 +11,27 @@ def reply_message(reply_token:str, message:str):
     """
     line_bot.LINE_BOT_API.reply_message(reply_token, TextSendMessage(text=message))
 
-def push_message(to:str, message:str):
+def push_message(to:str, message:str, img_url:str=None):
     """Push message to user
 
     Args:
         to (str): User ID
         message (str): Message to push
+        image_url (str): Image URL to push
     """
-    line_bot.LINE_BOT_API.push_message(to, TextSendMessage(text=message))
+    messages = []
+    
+    # 如果有文字訊息
+    if message:
+        messages.append(TextSendMessage(text=message))
+    
+    # 如果有圖片訊息
+    if img_url:
+        messages.append(ImageSendMessage(original_content_url=img_url, preview_image_url=img_url))
+
+    # 推送訊息
+    if messages:
+        line_bot.LINE_BOT_API.push_message(to, messages)
 
 def get_event_id(event:Event):
     """Get event ID

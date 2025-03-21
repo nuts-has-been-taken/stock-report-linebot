@@ -10,6 +10,8 @@ from app.model.line import Base
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # api start event
+    
+    # Create database table
     Base.metadata.create_all(bind=postgress_db.ENGINE)
     yield
     # api shut down event

@@ -6,6 +6,7 @@ WORKDIR /linebot
 # 安裝系統依賴，包含 PostgreSQL 開發庫和編譯工具
 RUN apt-get update && apt-get install -y \
     libpq-dev gcc && \
+    apt-get install -y fonts-noto-cjk &&\
     rm -rf /var/lib/apt/lists/*
     
 # 安裝 Poetry

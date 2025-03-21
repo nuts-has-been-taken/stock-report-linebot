@@ -25,6 +25,9 @@ class LineBot():
 
 line_bot = LineBot()
 
+class Imgur(BaseSettings):
+    IMGUR_CLIENT_ID: str
+
 class Postgres(BaseSettings):
     POSTGRES_URL: str
 
