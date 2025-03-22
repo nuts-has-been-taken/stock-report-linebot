@@ -110,7 +110,7 @@ def create_major_investors_report(data_number=20):
         if today_data:
             trading_data.loc[len(trading_data)] = today_data
         elif len(trading_data)==0: # 如果當天沒盤加上目前 df 是空的代表那天很有可能放假因此不傳
-            return
+            return "今日訊息還沒更新"
         today -= timedelta(days=1)
     
     # 創建圖片
@@ -118,7 +118,7 @@ def create_major_investors_report(data_number=20):
     create_major_investors_jpg(trading_data, file_path)
     
     # 上傳到 imgur
-    sucess, upload_res = upload_imgur(file_path)
+    sucess, upload_res = upload_imgur(file_path, "major")
     # 刪除圖片
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -203,7 +203,7 @@ def create_margin_report(data_number=7):
         if today_data:
             trading_data.loc[len(trading_data)] = today_data
         elif len(trading_data)==0:
-            return
+            return "今日訊息還沒更新"
         today -= timedelta(days=1)
     
     # 創建圖片
@@ -211,7 +211,7 @@ def create_margin_report(data_number=7):
     create_margin_jpg(trading_data, file_path)
     
     # 上傳到 imgur
-    sucess, upload_res = upload_imgur(file_path)
+    sucess, upload_res = upload_imgur(file_path, "margin")
     # 刪除圖片
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -322,7 +322,7 @@ def create_futures_report(data_number=7):
         if today_data:
             trading_data.loc[len(trading_data)] = today_data
         elif len(trading_data)==0:
-            return
+            return "今日訊息還沒更新"
         today -= timedelta(days=1)
     
     # 創建圖片
@@ -330,7 +330,7 @@ def create_futures_report(data_number=7):
     create_futures_jpg(trading_data, file_path)
     
     # 上傳到 imgur
-    sucess, upload_res = upload_imgur(file_path)
+    sucess, upload_res = upload_imgur(file_path, "futures")
     # 刪除圖片
     if os.path.exists(file_path):
         os.remove(file_path)

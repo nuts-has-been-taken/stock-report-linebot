@@ -44,7 +44,7 @@ def get_oath2_token(refresh_token=None, client_id=None, client_secret=None):
         print("Error getting token:", e)
         return None
 
-def upload_imgur(image_path:str="./"):
+def upload_imgur(image_path:str="./", name:str=""):
     """Upload image to imgur"""
     
     # 檢查檔案是否存在
@@ -54,9 +54,11 @@ def upload_imgur(image_path:str="./"):
         
     url = 'https://api.imgur.com/3/image'
     
+    today = datetime.date.today().strftime('%Y-%m-%d')
+    
     data = {
         'type': 'image',
-        'title': 'tw stock bot img',
+        'title': f'{today} tw stock {name}',
         'description': ''
     }
     
@@ -67,13 +69,12 @@ def upload_imgur(image_path:str="./"):
     access_token = check_token_and_update()
     
     headers = {
-        'Authorization': f'Client-ID {access_token}'
+        'Authorization': f'Bearer {access_token}'
     }
     
     try:
         response = requests.post(url, headers=headers, data=data, files=files)
         response.raise_for_status()
-        print(response.json())
         print(f"imgur 上傳成功：{response.json()['data']['link']}")
         return True, response.json()['data']['link']
     except requests.exceptions.RequestException as e:
