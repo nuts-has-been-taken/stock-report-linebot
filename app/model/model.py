@@ -30,6 +30,17 @@ class ImgurToken(Base):
     date = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
     access_token = Column(String, nullable=True)
 
+class YouTubeVideo(Base):
+    __tablename__ = 'youtube_videos'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    channel_name = Column(String, nullable=False)
+    channel_id = Column(String, nullable=False)
+    date = Column(Date, nullable=False)
+    vid_name = Column(String, nullable=False)
+    vid_url = Column(String, nullable=False)
+    vid_summary = Column(String, nullable=True)
+
 # Line Users table (deprecated)
 """class LineUser(Base):
     __tablename__ = "line_user"

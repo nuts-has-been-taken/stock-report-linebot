@@ -16,7 +16,12 @@ psycopg2 = "^2.9.10"
 sqlalchemy = "^2.0.38"
 matplotlib = "^3.10.1"
 yfinance = "^0.2.54"
+yt-dlp = "^2025.3.21"
+google-api-python-client = "^2.165.0"
 
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
 
 [build-system]
 requires = ["poetry-core"]

@@ -3,6 +3,7 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+from googleapiclient.discovery import build
 
 class Settings(BaseSettings):
     APP_NAME: str = "Line Stock Bot"
@@ -25,8 +26,19 @@ class LineBot():
 
 line_bot = LineBot()
 
-class Imgur(BaseSettings):
-    IMGUR_CLIENT_ID: str
+class GoogleAPI(BaseSettings):
+    YOUTUBE_API_KEY: str
+    
+    @model_validator(mode="after")
+    def init_youtube(self):
+        self.YOUTUBE = build('youtube', 'v3', developerKey=self.YOUTUBE_API_KEY)
+        return self
+    
+    class Config:
+        env_file = ".env"
+        extra = "allow"
+
+google_api = GoogleAPI()
 
 class Postgres(BaseSettings):
     POSTGRES_URL: str
