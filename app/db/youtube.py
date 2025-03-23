@@ -16,12 +16,22 @@ def get_today_youtube_vid(channel_id:str):
     """
     session = Session()
     today = datetime.date.today()
-    results = session.query(YouTubeVideo).filter(YouTubeVideo.date == today, YouTubeVideo.channel_id==channel_id).all()
-    session.close()
-    if results:
-        return results[0]
-    else:
-        return None
+    try:
+        result = session.query(YouTubeVideo).filter(YouTubeVideo.date == today, YouTubeVideo.channel_id==channel_id).first()
+        if result:
+            return_res = YouTubeVideo(
+                channel_name=result.channel_name,
+                channel_id=result.channel_id,
+                date=result.date,
+                vid_name=result.vid_name,
+                vid_url=result.vid_url,
+                vid_summary=result.vid_summary
+            )
+            return return_res
+    except Exception as e:
+        raise e
+    finally:
+        session.close()
 
 def save_youtube_vid(channel_name: str, channel_id: str, date: datetime.date, vid_name: str, vid_url: str, vid_summary: str = None):
     """Save a YouTube video record to the database.
@@ -49,6 +59,7 @@ def save_youtube_vid(channel_name: str, channel_id: str, date: datetime.date, vi
         )
         session.add(new_video)
         session.commit()
+        session.refresh(new_video)
         return new_video
     except Exception as e:
         session.rollback()

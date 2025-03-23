@@ -1,53 +1,27 @@
-from app.core.config import google_api
+from app.db.youtube import save_youtube_vid, get_today_youtube_vid
+from app.util.youtube import get_latest_live_stream, get_youtube_subtitles
+from app.util.llm import create_summary
 
-youtube = google_api.YOUTUBE
+from datetime import date
 
-channel_id = 'UC0lbAQVpenvfA2QqzsRtL_g'
-
-def get_latest_live_stream(channel_id):
-    request = youtube.search().list(
-        part="snippet",
-        channelId=channel_id,
-        eventType="completed",
-        type="video",
-        order="date",
-        maxResults=1
-    )
-    
-    response = request.execute()
-    
-    if response['items']:
-        video = response['items'][0]
-        video_id = video['id']['videoId']
-        title = video['snippet']['title']
-        url = f'https://www.youtube.com/watch?v={video_id}'
-        return title, url
-    else:
-        return None, None
-
-# 財金皓角
+# 游庭皓的財經皓角
 def get_hao_report():
     # 從資料庫取得資料
-    # 如果有資料，則返回資料
-    # 如果沒有資料，呼叫 gpt 生成報告
-    # 儲存報告
-    # 返回資料
-    pass
-
-# 查找頻道&id
-def search_channel_id(channel_name):
-    response = youtube.search().list(
-        part='snippet',
-        q=channel_name,
-        type='channel',
-        maxResults=1
-    ).execute()
-    
-    if 'items' in response and len(response['items']) > 0:
-        channel_id = response['items'][0]['snippet']['channelId']
-        channel_name = response['items'][0]['snippet']['title']
-        print(f"Channel Name: {channel_name}")
-        print(f"Channel ID: {channel_id}")
-        return channel_id, channel_name
+    channel_id = 'UC0lbAQVpenvfA2QqzsRtL_g'
+    data = get_today_youtube_vid(channel_id)
+    if not data:
+        title, url, vid_date = get_latest_live_stream(channel_id)
+        if vid_date != date.today():
+            return False, None, "今日無直播"
+        if url:
+            # 下載 youtube 字幕
+            subtitle = get_youtube_subtitles(url)
+            # 呼叫 gpt 生成報告
+            summary = create_summary(subtitle)
+            # 儲存報告
+            data = save_youtube_vid('游庭皓的財經皓角', channel_id, vid_date, title, url, summary)
+            return True, data, None
+        else:
+            return False, None, "取得影片失敗"
     else:
-        return None
+        return True, data, None

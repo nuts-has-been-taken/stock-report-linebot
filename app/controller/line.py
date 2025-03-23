@@ -1,6 +1,6 @@
 from linebot.models import MessageEvent, JoinEvent, FollowEvent
 
-from app.service.line import daily_report
+from app.service.line import daily_report, hao_report
 from app.util.line import get_event_id, get_reply_token, push_message, reply_message
 from logger import logger
 
@@ -19,6 +19,14 @@ def handle_msg(event:MessageEvent):
         # reply_message(reply_token=reply_token, message="請稍等，正在查詢中...")
         try:
             daily_report(event_id=event_id, report_type=event.message.text)
+            return
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            push_message(to=event_id, message="查詢失敗，請稍後再試")
+            return
+    elif event.message.text=="hao":
+        try:
+            hao_report(event_id=event_id)
             return
         except Exception as e:
             logger.error(f"Error: {e}")
