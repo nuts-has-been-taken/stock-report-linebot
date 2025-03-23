@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from googleapiclient.discovery import build
+from openai import OpenAI
 
 class Settings(BaseSettings):
     APP_NAME: str = "Line Stock Bot"
@@ -39,6 +40,20 @@ class GoogleAPI(BaseSettings):
         extra = "allow"
 
 google_api = GoogleAPI()
+
+class OpenAIClient(BaseSettings):
+    OPENAI_API_KEY: str
+    
+    @model_validator(mode="after")
+    def init_openai(self):
+        self.client = OpenAI(api_key=self.OPENAI_API_KEY)
+        return self
+
+    class Config:
+        env_file = ".env"
+        extra = "allow"
+        
+openai_client = OpenAIClient()
 
 class Postgres(BaseSettings):
     POSTGRES_URL: str
