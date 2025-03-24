@@ -18,7 +18,7 @@ def daily_report(event_id:str, report_type:str, data_number=20):
         elif report_type == "期貨":
             error_msg = create_futures_report(data_number)
         if error_msg:
-            push_message(to=event_id, message=f"查詢失敗，錯誤訊息: {error_msg}")
+            push_message(to=event_id, message=f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
             return
     result = get_today_report(report_type)
     push_message(to=event_id, message=result.msg, img_url=result.url)
@@ -30,5 +30,5 @@ def hao_report(event_id:str):
     if success:
         push_message(to=event_id, message=data.vid_summary)
     else:
-        push_message(to=event_id, message=f"查詢失敗，錯誤訊息: {err_msg}")
+        push_message(to=event_id, message=f"財金皓角 daily report 查詢失敗，錯誤訊息: {err_msg}")
     return 

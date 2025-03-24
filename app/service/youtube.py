@@ -16,6 +16,8 @@ def get_hao_report():
         if url:
             # 下載 youtube 字幕
             subtitle = get_youtube_subtitles(url)
+            if not subtitle:
+                return False, None, "今日字幕還沒上傳，請稍後在試"
             # 呼叫 gpt 生成報告
             summary = create_summary(subtitle)
             # 儲存報告
