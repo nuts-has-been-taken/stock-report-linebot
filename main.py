@@ -7,6 +7,8 @@ from app.controller.line import handle_msg, handle_join, handle_follow
 from app.core.config import line_bot, postgress_db
 from app.model.model import Base
 
+from app.router.youtube import router as youtube_router
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # api start event
@@ -18,6 +20,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Add Routers
+app.include_router(youtube_router, prefix="/api", tags=["YouTube"])
+
+# Line webhook
 handler = line_bot.LINE_WEBHOOK
 
 @app.get("/")

@@ -5,19 +5,19 @@ import datetime
 
 Session = postgress_db.SESSION
 
-def get_today_youtube_vid(channel_id:str):
-    """Get today report from database
+def get_youtube_vid(channel_id:str, date: datetime.date):
+    """Get report from database for a specific date.
     
     Args:
-        channel_id (str): channel id
+        channel_id (str): Channel ID.
+        date (datetime.date): The date for which to retrieve the data.
     
     Returns:
-        dict: YouTubeVideo data
+        dict: YouTubeVideo data.
     """
     session = Session()
-    today = datetime.date.today()
     try:
-        result = session.query(YouTubeVideo).filter(YouTubeVideo.date == today, YouTubeVideo.channel_id==channel_id).first()
+        result = session.query(YouTubeVideo).filter(YouTubeVideo.date == date, YouTubeVideo.channel_id == channel_id).first()
         if result:
             return_res = YouTubeVideo(
                 channel_name=result.channel_name,

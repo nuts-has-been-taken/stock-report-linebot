@@ -1,6 +1,6 @@
 from app.core.config import google_api
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import subprocess
 import os
 import re
@@ -19,6 +19,35 @@ def get_latest_live_stream(channel_id):
     
     response = request.execute()
     
+    if response['items']:
+        video = response['items'][0]
+        video_id = video['id']['videoId']
+        title = video['snippet']['title']
+        date = video['snippet']['publishTime']
+        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").date()
+        url = f'https://www.youtube.com/watch?v={video_id}'
+        return title, url, date
+    else:
+        return None, None, None
+
+def get_live_stream(channel_id, date):
+    
+    start_datetime = datetime.combine(date, datetime.min.time())
+    end_datetime = start_datetime + timedelta(days=1)
+    start_date = start_datetime.isoformat("T") + "Z"
+    end_date = end_datetime.isoformat("T") + "Z"
+    request = youtube.search().list(
+        part="snippet",
+        channelId=channel_id,
+        eventType="completed",
+        type="video",
+        order="date",
+        publishedAfter=start_date,
+        publishedBefore=end_date,
+        maxResults=1
+    )
+    
+    response = request.execute()
     if response['items']:
         video = response['items'][0]
         video_id = video['id']['videoId']
