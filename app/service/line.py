@@ -26,14 +26,13 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20):
     push_message(to=event_id, message=result.msg, img_url=result.url)
     return
 
-hao_report_msg = "【游庭皓的財經皓角】 {date} 報告總結\n\n{summary}"
+hao_report_msg = "【游庭皓的財經皓角】 {date} 報告總結\n\n{summary}\n\n{vid_url}"
 def hao_report(event_id:str, cron_mode:bool = True):
     """Send Hao report to event"""
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d')
     success, data, err_msg = get_today_hao_report()
     if success:
-        push_message(to=event_id, message=hao_report_msg.format(date=today, summary=data.vid_summary))
-        push_message(to=event_id, message=data.vid_url)
+        push_message(to=event_id, message=hao_report_msg.format(date=today, summary=data.vid_summary, vid_url=data.vid_url))
     else:
         if not cron_mode:
             push_message(to=event_id, message=f"財金皓角 daily report 查詢失敗，錯誤訊息: {err_msg}")
