@@ -1,5 +1,6 @@
 nginx-ssl/
 docker-compose.yml
+cron_job_scripts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
