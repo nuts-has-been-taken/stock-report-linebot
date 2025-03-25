@@ -6,4 +6,4 @@ def download_hao_report(start_date, end_date):
     end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
     
     data = get_hao_report(start_date=start_date, end_date=end_date)
-    return data
+    return {"data": data}

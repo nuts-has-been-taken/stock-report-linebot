@@ -1,6 +1,6 @@
 from linebot.models import MessageEvent, JoinEvent, FollowEvent
 
-from app.service.line import daily_report, hao_report
+from app.service.line import fetch_daily_report, hao_report
 from app.util.line import get_event_id, get_reply_token, push_message, reply_message
 from logger import logger
 
@@ -18,7 +18,7 @@ def handle_msg(event:MessageEvent):
     if event.message.text in ["法人", "籌碼", "期貨"]:
         # reply_message(reply_token=reply_token, message="請稍等，正在查詢中...")
         try:
-            daily_report(event_id=event_id, report_type=event.message.text)
+            fetch_daily_report(event_id=event_id, report_type=event.message.text)
             return
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -26,7 +26,7 @@ def handle_msg(event:MessageEvent):
             return
     elif event.message.text=="hao":
         try:
-            hao_report(event_id=event_id)
+            hao_report(event_id=event_id, cron_mode=False)
             return
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -38,6 +38,20 @@ def handle_msg(event:MessageEvent):
         # 聊天室或群組一般聊天不回覆
         if event.source.type == "user":
             reply_message(reply_token=reply_token, message=else_message)
+
+def get_daily_report(event_id: str, report_type: str, data_number: int = 20):
+    try:
+        fetch_daily_report(event_id, report_type, data_number)
+        return {"result": "success"}
+    except Exception as e:
+        return {"result": "fail", "error": str(e)}
+
+def line_hao_report(event_id: str, cron_mode: bool = True):
+    try:
+        hao_report(event_id, cron_mode)
+        return {"result": "success"}
+    except Exception as e:
+        return {"result": "fail", "error": str(e)}
 
 def handle_join(event:JoinEvent):
     """Handle join event from Line bot
