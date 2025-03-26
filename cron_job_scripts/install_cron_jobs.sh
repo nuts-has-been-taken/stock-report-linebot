@@ -3,10 +3,10 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # 設定要新增的 cron job
-FUTURES_REPORT="5 15 * * * source $SCRIPT_DIR/.env && /bin/bash $SCRIPT_DIR/futures_report.sh"
-MAJOR_REPORT="5 15 * * * source $SCRIPT_DIR/.env && /bin/bash $SCRIPT_DIR/major_report.sh"
-MARJIN_REPORT="0 21 * * * source $SCRIPT_DIR/.env && /bin/bash $SCRIPT_DIR/margin_report.sh"
-HAO_REPORT="0 11 * * * source $SCRIPT_DIR/.env && /bin/bash $SCRIPT_DIR/hao_report.sh"
+FUTURES_REPORT="5 15 * * * /bin/bash $SCRIPT_DIR/futures_report.sh"
+MAJOR_REPORT="5 15 * * * /bin/bash $SCRIPT_DIR/major_report.sh"
+MARJIN_REPORT="0 21 * * * /bin/bash $SCRIPT_DIR/margin_report.sh"
+HAO_REPORT="0 11 * * * /bin/bash $SCRIPT_DIR/hao_report.sh"
 
 # 檢查並逐一加入 cron job
 (crontab -l 2>/dev/null) | grep -v "$SCRIPT_DIR" | crontab -
