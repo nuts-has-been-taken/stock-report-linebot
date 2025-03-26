@@ -61,6 +61,8 @@ def handle_join(event:JoinEvent):
     """
     """_, event_id = get_event_id(event)
     push_message(to=event_id, message=welcome_message)"""
+    event_type, event_id = get_event_id(event)
+    print(f"Event_type: {event_type}, Event_id: {event_id}")
         
 def handle_follow(event:FollowEvent):
     """Handle follow event from Line bot
@@ -68,8 +70,9 @@ def handle_follow(event:FollowEvent):
     Args:
         event (FollowEvent): Follow event from Line bot
     """
-    _, event_id = get_event_id(event)
-    push_message(to=event_id, message=welcome_message)
+    # push_message(to=event_id, message=welcome_message)
+    event_type, event_id = get_event_id(event)
+    print(f"Event_type: {event_type}, Event_id: {event_id}")
 
 else_message = "請輸入正確指令，或輸入'幫助'查看指令"
 
