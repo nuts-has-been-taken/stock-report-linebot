@@ -86,4 +86,4 @@ help_message = """法人與期貨更新時間: 15:05
 基本指令:
 - 幫助: 查看指令"""
 
-welcome_message = f"歡迎使用 Line 股票追蹤機器人！\n\n {help_message}"
+welcome_message = f"歡迎使用 Line 股票追蹤機器人！\n\n{help_message}"

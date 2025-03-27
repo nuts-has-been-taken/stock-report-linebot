@@ -124,7 +124,7 @@ def create_major_investors_report(data_number=20):
         os.remove(file_path)
     # 保存到資料庫
     if sucess:
-        msg = f"""【股票報告】{trading_data.index[0].strftime('%Y-%m-%d')}\n三大法人買賣超變化\n外資：{(trading_data.loc[trading_data.index[0], '外資']/100000000):.1f} 億\n投信：{(trading_data.loc[trading_data.index[0], '投信']/100000000):.1f} 億\n自營商：{(trading_data.loc[trading_data.index[0], '自營商']/100000000):.1f} 億"""
+        msg = f"""外資：{(trading_data.loc[trading_data.index[0], '外資']/100000000):.1f} 億\n投信：{(trading_data.loc[trading_data.index[0], '投信']/100000000):.1f} 億\n自營商：{(trading_data.loc[trading_data.index[0], '自營商']/100000000):.1f} 億"""
         error_msg = save_report(date=trading_data.index[0], report_type='法人', msg=msg, url=upload_res)
         if error_msg:
             return error_msg
@@ -217,7 +217,7 @@ def create_margin_report(data_number=7):
         os.remove(file_path)
     # 保存到資料庫
     if sucess:
-        msg = f"""【股票報告】{trading_data.index[0].strftime('%Y-%m-%d')}\n融資融卷餘額變化\n融券：{(trading_data.loc[trading_data.index[0], '融券(張)'])} 張\n融資：{(trading_data.loc[trading_data.index[0], '融資金額(億)']):.1f} 億"""
+        msg = f"""融券：{(trading_data.loc[trading_data.index[0], '融券(張)'])} 張\n融資：{(trading_data.loc[trading_data.index[0], '融資金額(億)']):.1f} 億"""
         error_msg = save_report(date=trading_data.index[0], report_type='籌碼', msg=msg, url=upload_res)
         if error_msg:
             return error_msg
@@ -336,7 +336,7 @@ def create_futures_report(data_number=7):
         os.remove(file_path)
     # 保存到資料庫
     if sucess:
-        msg = f"""【股票報告】{trading_data.index[0].strftime('%Y-%m-%d')}\n三大法人期貨未平倉口數\n外資：{(trading_data.loc[trading_data.index[0], '外資'])}\n投信：{(trading_data.loc[trading_data.index[0], '投信'])}\n自營商：{(trading_data.loc[trading_data.index[0], '自營商'])}"""
+        msg = f"""外資：{(trading_data.loc[trading_data.index[0], '外資'])}\n投信：{(trading_data.loc[trading_data.index[0], '投信'])}\n自營商：{(trading_data.loc[trading_data.index[0], '自營商'])}"""
         error_msg = save_report(date=trading_data.index[0], report_type='期貨', msg=msg, url=upload_res)
         if error_msg:
             return error_msg

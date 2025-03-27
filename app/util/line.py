@@ -1,4 +1,4 @@
-from linebot.models import TextSendMessage, Event, ImageSendMessage
+from linebot.models import TextSendMessage, Event, ImageSendMessage, FlexSendMessage
 
 from app.core.config import line_bot
 
@@ -11,7 +11,7 @@ def reply_message(reply_token:str, message:str):
     """
     line_bot.LINE_BOT_API.reply_message(reply_token, TextSendMessage(text=message))
 
-def push_message(to:str, message:str, img_url:str=None):
+def push_message(to:str, message:str=None, img_url:str=None, flex_msg:dict=None):
     """Push message to user
 
     Args:
@@ -32,6 +32,10 @@ def push_message(to:str, message:str, img_url:str=None):
     # 推送訊息
     if messages:
         line_bot.LINE_BOT_API.push_message(to, messages)
+    
+    # 如果有 Flex 訊息
+    if flex_msg:
+        line_bot.LINE_BOT_API.push_message(to, FlexSendMessage(alt_text="Flex message", contents=flex_msg))
 
 def get_event_id(event:Event):
     """Get event ID
