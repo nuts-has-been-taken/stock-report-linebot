@@ -10,32 +10,49 @@ import requests
 import json
 import os
 
+from app.db.report import save_report, get_daily_future, get_daily_major_invest, get_daily_margin, save_daily_future, save_daily_major_invest, save_daily_margin
 from app.util.imgur import upload_imgur
-from app.db.report import save_report
 
 ### 三大法人
 def get_today_major_investors(date:datetime):
     
-    url = "https://www.twse.com.tw/rwd/zh/fund/BFI82U"
-    body = {
-        'response': 'json',
-        'dayDate': date.strftime('%Y%m%d'),
-        'type': 'day'
-    }
-    r = requests.post(url, data=body)
-    r = json.loads(r.content)
-    if r['stat'] != "OK":
-        return None
-    data = r['data']
-    res = {
-        '日期':date,
-        '外資':eval(data[3][3].replace(',', ''))+eval(data[4][3].replace(',', '')),
-        '投信':eval(data[2][3].replace(',', '')),
-        '自營商':eval(data[0][3].replace(',', ''))+eval(data[1][3].replace(',', '')),
-        '合計':eval(data[5][3].replace(',', ''))
-    }
-    
-    return res
+    major_invest = get_daily_major_invest(date)
+    if major_invest:
+        res = {
+            '日期':date,
+            '外資':major_invest.foreign_investors,
+            '投信':major_invest.investment_trust,
+            '自營商':major_invest.dealer,
+            '合計':major_invest.total
+        }
+        
+        return res
+    else:
+        url = "https://www.twse.com.tw/rwd/zh/fund/BFI82U"
+        body = {
+            'response': 'json',
+            'dayDate': date.strftime('%Y%m%d'),
+            'type': 'day'
+        }
+        r = requests.post(url, data=body)
+        r = json.loads(r.content)
+        if r['stat'] != "OK":
+            return None
+        data = r['data']
+        foreign_investors = int(data[3][3].replace(',', ''))+int(data[4][3].replace(',', ''))
+        investment_trust = int(data[2][3].replace(',', ''))
+        dealer = int(data[0][3].replace(',', ''))+int(data[1][3].replace(',', ''))
+        total = int(data[5][3].replace(',', ''))
+        error_msg = save_daily_major_invest(date, foreign_investors, investment_trust, dealer, total)
+        res = {
+            '日期':date,
+            '外資':foreign_investors,
+            '投信':investment_trust,
+            '自營商':dealer,
+            '合計':total
+        }
+        
+        return res
 
 def create_major_investors_jpg(df:pd.DataFrame, file_path='major_plot.png'):
     
@@ -136,20 +153,33 @@ def create_major_investors_report(data_number=20):
 ### 融資融券
 def get_margin(date:datetime):
     
-    url = f"https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN?date={date.strftime('%Y%m%d')}&selectType=MS&response=json&_=1724655679565"
+    margin = get_daily_margin(date)
+    if margin:
+        res = {
+            '日期':date,
+            '融券(張)':margin.margin_ticket,
+            '融資金額(億)':margin.margin_amount
+        }
+        
+        return res
+    else:
+        url = f"https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN?date={date.strftime('%Y%m%d')}&selectType=MS&response=json&_=1724655679565"
 
-    r = requests.get(url)
-    r = json.loads(r.content)
-    if r['stat'] != "OK":
-        return None
-    data = r['tables'][0]['data']
-    res = {
-        '日期':date,
-        '融券(張)':eval(data[1][5].replace(',', '')),
-        '融資金額(億)':float(eval(data[2][5].replace(',', ''))/100000),
-    }
-    
-    return res
+        r = requests.get(url)
+        r = json.loads(r.content)
+        if r['stat'] != "OK":
+            return None
+        data = r['tables'][0]['data']
+        margin_ticket = int(data[1][5].replace(',', ''))
+        margin_amount = float(int(data[2][5].replace(',', ''))/100000)
+        error_msg = save_daily_margin(date, margin_ticket, margin_amount)
+        res = {
+            '日期':date,
+            '融券(張)':margin_ticket,
+            '融資金額(億)':margin_amount,
+        }
+        
+        return res
 
 def create_margin_jpg(df:pd.DataFrame, file_path='margin_plot.png'):
     
@@ -228,32 +258,47 @@ def create_margin_report(data_number=7):
 
 ### 期貨
 def get_futures(date:datetime):
-    url = "https://www.taifex.com.tw/cht/3/futContractsDate"
-    data = {
-        'queryType': '1',
-        'goDay': '',
-        'doQuery': '1',
-        'dateaddcnt': '',
-        'queryDate': date.strftime('%Y/%m/%d'),
-        'commodityId': '',
-        'button': '送出查詢'
-    }
-    
-    response = requests.post(url, data=data)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    content = soup.find("tbody")
-    if content:
-        content = content.find_all("tr")
+    futures = get_daily_future(date)
+    if futures:
         res = {
             "日期":date,
-            "自營商":eval(content[0].find_all("td", align="right")[10].text.strip().replace(',', '')),
-            "投信":eval(content[1].find_all("td", align="right")[10].text.strip().replace(',', '')),
-            "外資":eval(content[2].find_all("td", align="right")[10].text.strip().replace(',', '')),
+            "自營商":futures.dealer,
+            "投信":futures.investment_trust,
+            "外資":futures.foreign_investors
         }
+        
+        return res
     else:
-        return None
-    
-    return res
+        url = "https://www.taifex.com.tw/cht/3/futContractsDate"
+        data = {
+            'queryType': '1',
+            'goDay': '',
+            'doQuery': '1',
+            'dateaddcnt': '',
+            'queryDate': date.strftime('%Y/%m/%d'),
+            'commodityId': '',
+            'button': '送出查詢'
+        }
+        
+        response = requests.post(url, data=data)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        content = soup.find("tbody")
+        if content:
+            content = content.find_all("tr")
+            foreign_investors = int(content[2].find_all("td", align="right")[10].text.strip().replace(',', ''))
+            investment_trust = int(content[1].find_all("td", align="right")[10].text.strip().replace(',', ''))
+            dealer = int(content[0].find_all("td", align="right")[10].text.strip().replace(',', ''))
+            error_msg = save_daily_future(date, foreign_investors, investment_trust, dealer)
+            res = {
+                "日期":date,
+                "外資":foreign_investors,
+                "投信":investment_trust,
+                "自營商":dealer
+            }
+        else:
+            return None
+        
+        return res
 
 def create_futures_jpg(df:pd.DataFrame, file_path='future_plot.png'):
     

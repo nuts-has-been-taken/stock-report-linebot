@@ -27,7 +27,7 @@ def save_daily_major_invest(date, foreign_investors, investment_trust, dealer):
         return None
     except Exception as e:
         session.rollback()
-        print(f"Error saving DailyMajorInvest: {e}")
+        print(f"Error saving {date} DailyMajorInvest: {e}")
         return e
     finally:
         session.close()
@@ -71,7 +71,7 @@ def save_daily_margin(date, margin_ticket, margin_amount):
         return None
     except Exception as e:
         session.rollback()
-        print(f"Error saving DailyMargin: {e}")
+        print(f"Error saving {date} DailyMargin: {e}")
         return e
     finally:
         session.close()
@@ -117,7 +117,7 @@ def save_daily_future(date, foreign_investors, investment_trust, dealer):
         return None
     except Exception as e:
         session.rollback()
-        print(f"Error saving DailyFuture: {e}")
+        print(f"Error saving {date} DailyFuture: {e}")
         return e
     finally:
         session.close()
