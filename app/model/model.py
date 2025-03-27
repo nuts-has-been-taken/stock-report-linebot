@@ -21,6 +21,35 @@ class Report(Base):
     msg = Column(String, nullable=False)
     url = Column(String, nullable=False)
 
+# Daily Major Invest table
+class DailyMajorInvest(Base):
+    __tablename__ = 'daily_major_invest'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, default=datetime.today, nullable=False)
+    foreign_investors = Column(Integer, nullable=False)
+    investment_trust = Column(Integer, nullable=False)
+    dealer = Column(Integer, nullable=False)
+
+# Daily Margin table
+class DailyMargin(Base):
+    __tablename__ = 'daily_margin'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, default=datetime.today, nullable=False)
+    margin_ticket = Column(Integer, nullable=False)
+    margin_amount = Column(Integer, nullable=False)
+
+# Daily Future table
+class DailyFuture(Base):
+    __tablename__ = 'daily_future'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, default=datetime.today, nullable=False)
+    foreign_investors = Column(Integer, nullable=False)
+    investment_trust = Column(Integer, nullable=False)
+    dealer = Column(Integer, nullable=False)
+
 # imgur token table
 class ImgurToken(Base):
     __tablename__ = 'imgur_tokens'
