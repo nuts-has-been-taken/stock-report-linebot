@@ -30,6 +30,7 @@ class DailyMajorInvest(Base):
     foreign_investors = Column(Integer, nullable=False)
     investment_trust = Column(Integer, nullable=False)
     dealer = Column(Integer, nullable=False)
+    total = Column(Integer, nullable=False)
 
 # Daily Margin table
 class DailyMargin(Base):
