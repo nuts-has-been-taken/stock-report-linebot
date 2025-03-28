@@ -35,7 +35,7 @@ def push_message(to:str, message:str=None, img_url:str=None, flex_msg:dict=None)
     
     # 如果有 Flex 訊息
     if flex_msg:
-        line_bot.LINE_BOT_API.push_message(to, FlexSendMessage(alt_text="Flex message", contents=flex_msg))
+        line_bot.LINE_BOT_API.push_message(to, FlexSendMessage(alt_text="股票報告", contents=flex_msg))
 
 def get_event_id(event:Event):
     """Get event ID
