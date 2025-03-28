@@ -43,7 +43,7 @@ def get_today_major_investors(date:datetime):
         investment_trust = int(data[2][3].replace(',', ''))
         dealer = int(data[0][3].replace(',', ''))+int(data[1][3].replace(',', ''))
         total = int(data[5][3].replace(',', ''))
-        error_msg = save_daily_major_invest(date, foreign_investors, investment_trust, dealer, total)
+        error_msg = save_daily_major_invest(date, foreign_investors, investment_trust, dealer)
         res = {
             '日期':date,
             '外資':foreign_investors,

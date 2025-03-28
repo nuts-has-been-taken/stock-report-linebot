@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, Enum, Boolean, ForeignKey, DateTime, Float
+from sqlalchemy import Column, Integer, String, Date, Enum, Boolean, ForeignKey, DateTime, Float, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
@@ -27,10 +27,9 @@ class DailyMajorInvest(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     date = Column(Date, default=datetime.today, nullable=False)
-    foreign_investors = Column(Integer, nullable=False)
-    investment_trust = Column(Integer, nullable=False)
-    dealer = Column(Integer, nullable=False)
-    total = Column(Integer, nullable=False)
+    foreign_investors = Column(BigInteger, nullable=False)
+    investment_trust = Column(BigInteger, nullable=False)
+    dealer = Column(BigInteger, nullable=False)
 
 # Daily Margin table
 class DailyMargin(Base):
@@ -38,7 +37,7 @@ class DailyMargin(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     date = Column(Date, default=datetime.today, nullable=False)
-    margin_ticket = Column(Integer, nullable=False)
+    margin_ticket = Column(BigInteger, nullable=False)
     margin_amount = Column(Float, nullable=False)
 
 # Daily Future table
@@ -47,9 +46,9 @@ class DailyFuture(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     date = Column(Date, default=datetime.today, nullable=False)
-    foreign_investors = Column(Integer, nullable=False)
-    investment_trust = Column(Integer, nullable=False)
-    dealer = Column(Integer, nullable=False)
+    foreign_investors = Column(BigInteger, nullable=False)
+    investment_trust = Column(BigInteger, nullable=False)
+    dealer = Column(BigInteger, nullable=False)
 
 # imgur token table
 class ImgurToken(Base):
