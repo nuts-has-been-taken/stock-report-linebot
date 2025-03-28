@@ -25,7 +25,8 @@ def get_youtube_vid(channel_id:str, date: datetime.date):
                 date=result.date,
                 vid_name=result.vid_name,
                 vid_url=result.vid_url,
-                vid_summary=result.vid_summary
+                vid_summary=result.vid_summary,
+                vid_img=result.vid_img
             )
             return return_res
     except Exception as e:

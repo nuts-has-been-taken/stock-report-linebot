@@ -136,7 +136,7 @@ hao_report_flex_msg = {
             },
             {
                 "type": "text",
-                "text": "個人看法",
+                "text": "AI看法",
                 "weight": "bold",
                 "size": "xl",
                 "offsetTop": "md"
@@ -183,7 +183,7 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20):
     flex_copy["hero"]["url"] = result.url
     flex_copy["body"]["contents"][0]["text"] = report_dict[report_type]
     flex_copy["body"]["contents"][1]["text"] = result.msg
-    push_message(to=event_id, flex_msg=flex_copy, message=f"【股票報告】{report_dict[report_type]}")
+    push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【股票報告】{report_dict[report_type]}")
     return
 
 def hao_report(event_id:str, cron_mode:bool = True):
@@ -199,7 +199,7 @@ def hao_report(event_id:str, cron_mode:bool = True):
         flex_copy["hero"]["action"]["uri"] = data.vid_url
         flex_copy["body"]["contents"][1]["text"] = contents[0]
         flex_copy["body"]["contents"][4]["text"] = contents[1]
-        push_message(to=event_id, flex_msg=flex_copy, message=f"【游庭皓的財經皓角】報告")
+        push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【游庭皓的財經皓角】報告")
     else:
         if not cron_mode:
             push_message(to=event_id, message=f"財金皓角 daily report 查詢失敗，錯誤訊息: {err_msg}")
