@@ -33,7 +33,7 @@ def get_youtube_vid(channel_id:str, date: datetime.date):
     finally:
         session.close()
 
-def save_youtube_vid(channel_name: str, channel_id: str, date: datetime.date, vid_name: str, vid_url: str, vid_summary: str = None):
+def save_youtube_vid(channel_name: str, channel_id: str, date: datetime.date, vid_name: str, vid_url: str, vid_summary: str = None, vid_img: str = None):
     """Save a YouTube video record to the database.
 
     Args:
@@ -43,6 +43,7 @@ def save_youtube_vid(channel_name: str, channel_id: str, date: datetime.date, vi
         vid_name (str): The name of the video.
         vid_url (str): The URL of the video.
         vid_summary (str, optional): A summary of the video. Defaults to None.
+        vid_img (str, optional): The URL of the video thumbnail. Defaults to None.
 
     Returns:
         YouTubeVideo: The saved YouTubeVideo object.
@@ -55,7 +56,8 @@ def save_youtube_vid(channel_name: str, channel_id: str, date: datetime.date, vi
             date=date,
             vid_name=vid_name,
             vid_url=vid_url,
-            vid_summary=vid_summary
+            vid_summary=vid_summary,
+            vid_img=vid_img
         )
         session.add(new_video)
         session.commit()

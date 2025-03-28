@@ -6,8 +6,9 @@ from app.service.youtube import get_today_hao_report
 
 from datetime import datetime
 import copy
+import re
 
-felx_msg = {
+daily_report_felx_msg = {
     "type": "bubble",
     "header": {
         "type": "box",
@@ -74,6 +75,90 @@ report_dict = {
     "期貨":"三大法人期貨未平倉口數"
 }
 
+hao_report_flex_msg = {
+    "type": "bubble",
+    "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+            {
+                "type": "text",
+                "text": "【游庭皓的財經皓角】 2025-03-28 報告",
+                "size": "sm",
+                "align": "start",
+                "color": "#FFFCEC"
+            }
+        ],
+        "borderWidth": "none",
+        "backgroundColor": "#FF5151",
+        "cornerRadius": "none",
+        "paddingStart": "lg",
+        "paddingBottom": "md",
+        "paddingTop": "lg"
+    },
+    "hero": {
+        "type": "image",
+        "url": "https://i.imgur.com/q1r8GO1.png",
+        "aspectMode": "fit",
+        "aspectRatio": "17.7:10",
+        "size": "full",
+        "action": {
+            "type": "uri",
+            "label": "action",
+            "uri": "https://i.imgur.com/q1r8GO1.png"
+        },
+    },
+    "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+            {
+                "type": "text",
+                "text": "重點摘要",
+                "weight": "bold",
+                "size": "xl"
+            },
+            {
+                "type": "text",
+                "text": "None",
+                "color": "#666666",
+                "size": "sm",
+                "flex": 1,
+                "weight": "regular",
+                "style": "normal",
+                "decoration": "none",
+                "wrap": True,
+                "offsetTop": "none"
+            },
+            {
+                "type": "separator",
+                "margin": "md"
+            },
+            {
+                "type": "text",
+                "text": "個人看法",
+                "weight": "bold",
+                "size": "xl",
+                "offsetTop": "md"
+            },
+            {
+                "type": "text",
+                "text": "None",
+                "color": "#666666",
+                "size": "sm",
+                "flex": 1,
+                "weight": "regular",
+                "style": "normal",
+                "decoration": "none",
+                "wrap": True,
+                "offsetTop": "md"
+            }
+        ],
+        "paddingBottom": "xl",
+        "paddingTop": "md"
+    }
+}
+
 def fetch_daily_report(event_id:str, report_type:str, data_number=20):
     """Send daily report to event"""
     # TODO 時間檢查
@@ -92,22 +177,29 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20):
             return
     result = get_today_report(report_type)
     # 組裝 Flex Message
-    flex_copy = copy.deepcopy(felx_msg)
+    flex_copy = copy.deepcopy(daily_report_felx_msg)
     flex_copy["header"]["contents"][0]["text"] = f"【股票報告】 {result.date.strftime('%Y-%m-%d')}"
     flex_copy["hero"]["action"]["uri"] = result.url
     flex_copy["hero"]["url"] = result.url
     flex_copy["body"]["contents"][0]["text"] = report_dict[report_type]
     flex_copy["body"]["contents"][1]["text"] = result.msg
-    push_message(to=event_id, flex_msg=flex_copy)
+    push_message(to=event_id, flex_msg=flex_copy, message=f"【股票報告】{report_dict[report_type]}")
     return
 
-hao_report_msg = "【游庭皓的財經皓角】 {date} 報告總結\n\n{summary}\n\n{vid_url}"
 def hao_report(event_id:str, cron_mode:bool = True):
     """Send Hao report to event"""
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d')
     success, data, err_msg = get_today_hao_report()
     if success:
-        push_message(to=event_id, message=hao_report_msg.format(date=today, summary=data.vid_summary, vid_url=data.vid_url))
+        sections = re.split(r'### .+?：', data.vid_summary)
+        contents = [section.strip() for section in sections if section.strip()]
+        flex_copy = copy.deepcopy(hao_report_flex_msg)
+        flex_copy["header"]["contents"][0]["text"] = f"【游庭皓的財經皓角】 {today} 報告"
+        flex_copy["hero"]["url"] = data.vid_img
+        flex_copy["hero"]["action"]["uri"] = data.vid_url
+        flex_copy["body"]["contents"][1]["text"] = contents[0]
+        flex_copy["body"]["contents"][4]["text"] = contents[1]
+        push_message(to=event_id, flex_msg=flex_copy, message=f"【游庭皓的財經皓角】報告")
     else:
         if not cron_mode:
             push_message(to=event_id, message=f"財金皓角 daily report 查詢失敗，錯誤訊息: {err_msg}")

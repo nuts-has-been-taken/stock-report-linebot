@@ -69,6 +69,7 @@ class YouTubeVideo(Base):
     vid_name = Column(String, nullable=False)
     vid_url = Column(String, nullable=False)
     vid_summary = Column(String, nullable=True)
+    vid_img = Column(String, nullable=True)
 
 # Line Users table (deprecated)
 """class LineUser(Base):

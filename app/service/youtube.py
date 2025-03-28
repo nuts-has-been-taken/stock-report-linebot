@@ -1,5 +1,5 @@
 from app.db.youtube import save_youtube_vid, get_youtube_vid
-from app.util.youtube import get_latest_live_stream, get_live_stream, get_youtube_subtitles
+from app.util.youtube import get_latest_live_stream, get_live_stream, get_youtube_subtitles, get_youtube_img
 from app.util.llm import create_summary
 
 from datetime import date, timedelta
@@ -18,10 +18,11 @@ def get_today_hao_report():
             subtitle = get_youtube_subtitles(url)
             if not subtitle:
                 return False, None, "今日字幕還沒上傳，請稍後在試"
+            img_url = get_youtube_img(url)
             # 呼叫 gpt 生成報告
             summary = create_summary(subtitle)
             # 儲存報告
-            data = save_youtube_vid('游庭皓的財經皓角', channel_id, vid_date, title, url, summary)
+            data = save_youtube_vid('游庭皓的財經皓角', channel_id, vid_date, title, url, summary, img_url)
             return True, data, None
         else:
             return False, None, "取得影片失敗"

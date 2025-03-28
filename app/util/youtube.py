@@ -87,6 +87,19 @@ def get_youtube_subtitles(youtube_url):
     else:
         return None
 
+def get_youtube_img(youtube_url):
+    """return youtube video thumbnail url"""
+    command = [
+        "yt-dlp",
+        "--get-thumbnail",
+        youtube_url
+    ]
+    result = subprocess.run(command, capture_output=True)
+    if result.returncode == 0:
+        return result.stdout.decode('utf-8').strip()
+    else:
+        return None
+
 # 查找頻道&id
 def search_channel_id(channel_name):
     response = youtube.search().list(
