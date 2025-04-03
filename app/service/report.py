@@ -22,8 +22,7 @@ def get_today_major_investors(date:datetime):
             '日期':date,
             '外資':major_invest.foreign_investors,
             '投信':major_invest.investment_trust,
-            '自營商':major_invest.dealer,
-            '合計':major_invest.total
+            '自營商':major_invest.dealer
         }
         
         return res
@@ -42,14 +41,12 @@ def get_today_major_investors(date:datetime):
         foreign_investors = int(data[3][3].replace(',', ''))+int(data[4][3].replace(',', ''))
         investment_trust = int(data[2][3].replace(',', ''))
         dealer = int(data[0][3].replace(',', ''))+int(data[1][3].replace(',', ''))
-        total = int(data[5][3].replace(',', ''))
         error_msg = save_daily_major_invest(date, foreign_investors, investment_trust, dealer)
         res = {
             '日期':date,
             '外資':foreign_investors,
             '投信':investment_trust,
-            '自營商':dealer,
-            '合計':total
+            '自營商':dealer
         }
         
         return res

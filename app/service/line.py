@@ -159,7 +159,7 @@ hao_report_flex_msg = {
     }
 }
 
-def fetch_daily_report(event_id:str, report_type:str, data_number=20):
+def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:bool = False):
     """Send daily report to event"""
     # TODO 時間檢查
     
@@ -173,7 +173,9 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20):
         elif report_type == "期貨":
             error_msg = create_futures_report(data_number)
         if error_msg:
-            push_message(to=event_id, message=f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
+            print(f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
+            if not cron_mode:
+                push_message(to=event_id, message=f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
             return
     result = get_today_report(report_type)
     # 組裝 Flex Message

@@ -18,7 +18,7 @@ def handle_msg(event:MessageEvent):
     if event.message.text in ["法人", "籌碼", "期貨"]:
         # reply_message(reply_token=reply_token, message="請稍等，正在查詢中...")
         try:
-            fetch_daily_report(event_id=event_id, report_type=event.message.text)
+            fetch_daily_report(event_id=event_id, report_type=event.message.text, cron_mode=False)
             return
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -39,9 +39,9 @@ def handle_msg(event:MessageEvent):
         if event.source.type == "user":
             reply_message(reply_token=reply_token, message=else_message)
 
-def get_daily_report(event_id: str, report_type: str, data_number: int = 20):
+def get_daily_report(event_id: str, report_type: str, data_number: int = 20, cron_mode:bool = True):
     try:
-        fetch_daily_report(event_id, report_type, data_number)
+        fetch_daily_report(event_id, report_type, data_number, cron_mode)
         return {"result": "success"}
     except Exception as e:
         return {"result": "fail", "error": str(e)}
