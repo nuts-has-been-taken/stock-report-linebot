@@ -6,56 +6,44 @@ from sqlalchemy import create_engine
 from googleapiclient.discovery import build
 from openai import OpenAI
 
-class Settings(BaseSettings):
-    APP_NAME: str = "Line Stock Bot"
-    DEBUG: bool = False
-    
-    # Line settings
-    LINE_CHANNEL_ACCESS_TOKEN: str
-    LINE_CHANNEL_SECRET: str
-    
+class CommonConfig(BaseSettings):
     class Config:
         env_file = ".env"
         extra = "allow"
 
-settings = Settings()
-
-class LineBot():
-    def __init__(self):
-        self.LINE_BOT_API = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
-        self.LINE_WEBHOOK = WebhookHandler(settings.LINE_CHANNEL_SECRET)
+class LineBot(CommonConfig):
+    LINE_CHANNEL_ACCESS_TOKEN: str
+    LINE_CHANNEL_SECRET: str
+    
+    @model_validator(mode="after")
+    def init_line(self):
+        self.LINE_BOT_API = LineBotApi(self.LINE_CHANNEL_ACCESS_TOKEN)
+        self.LINE_WEBHOOK = WebhookHandler(self.LINE_CHANNEL_SECRET)
+        return self
 
 line_bot = LineBot()
 
-class GoogleAPI(BaseSettings):
+class GoogleAPI(CommonConfig):
     YOUTUBE_API_KEY: str
     
     @model_validator(mode="after")
     def init_youtube(self):
         self.YOUTUBE = build('youtube', 'v3', developerKey=self.YOUTUBE_API_KEY)
         return self
-    
-    class Config:
-        env_file = ".env"
-        extra = "allow"
 
 google_api = GoogleAPI()
 
-class OpenAIClient(BaseSettings):
+class OpenAIClient(CommonConfig):
     OPENAI_API_KEY: str
     
     @model_validator(mode="after")
     def init_openai(self):
         self.client = OpenAI(api_key=self.OPENAI_API_KEY)
         return self
-
-    class Config:
-        env_file = ".env"
-        extra = "allow"
         
 openai_client = OpenAIClient()
 
-class Postgres(BaseSettings):
+class Postgres(CommonConfig):
     POSTGRES_URL: str
 
     @model_validator(mode="after")
@@ -64,8 +52,4 @@ class Postgres(BaseSettings):
         self.SESSION = sessionmaker(autocommit=False, autoflush=False, bind=self.ENGINE)
         return self
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
-        
 postgress_db = Postgres()
