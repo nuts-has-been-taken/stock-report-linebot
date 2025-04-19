@@ -18,22 +18,22 @@ def handle_msg(event:MessageEvent):
     if event.message.text in ["法人", "籌碼", "期貨"]:
         # reply_message(reply_token=reply_token, message="請稍等，正在查詢中...")
         try:
-            fetch_daily_report(event_id=event_id, report_type=event.message.text, cron_mode=False)
+            fetch_daily_report(event_id=event_id, reply_token=reply_token, report_type=event.message.text, cron_mode=False)
             return
         except Exception as e:
             logger.error(f"Error: {e}")
-            push_message(to=event_id, message="查詢失敗，請稍後再試")
+            reply_message(reply_token=reply_token, message="查詢失敗，請稍後再試")
             return
     elif event.message.text=="hao":
         try:
-            hao_report(event_id=event_id, cron_mode=False)
+            hao_report(event_id=event_id, reply_token=reply_token, cron_mode=False)
             return
         except Exception as e:
             logger.error(f"Error: {e}")
-            push_message(to=event_id, message="查詢失敗，請稍後再試")
+            reply_message(reply_token=reply_token, message="查詢失敗，請稍後再試")
             return
     elif event.message.text in ["幫助", "help", "Help", "-h", "-H"]:
-        push_message(to=event_id, message=help_message)
+        reply_message(reply_token=reply_token, message=help_message)
     else:
         # 聊天室或群組一般聊天不回覆
         if event.source.type == "user":
@@ -41,14 +41,14 @@ def handle_msg(event:MessageEvent):
 
 def get_daily_report(event_id: str, report_type: str, data_number: int = 20, cron_mode:bool = True):
     try:
-        fetch_daily_report(event_id, report_type, data_number, cron_mode)
+        fetch_daily_report(event_id=event_id, report_type=report_type, data_number=data_number, cron_mode=cron_mode)
         return {"result": "success"}
     except Exception as e:
         return {"result": "fail", "error": str(e)}
 
 def line_hao_report(event_id: str, cron_mode: bool = True):
     try:
-        hao_report(event_id, cron_mode)
+        hao_report(event_id=event_id, cron_mode=cron_mode)
         return {"result": "success"}
     except Exception as e:
         return {"result": "fail", "error": str(e)}

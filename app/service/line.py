@@ -1,5 +1,5 @@
 
-from app.util.line import push_message
+from app.util.line import push_message, reply_message
 from app.db.report import get_today_report
 from app.service.report import create_major_investors_report, create_futures_report, create_margin_report
 from app.service.youtube import get_today_hao_report
@@ -159,7 +159,7 @@ hao_report_flex_msg = {
     }
 }
 
-def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:bool = False):
+def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:bool = False, reply_token:str = None):
     """Send daily report to event"""
     # TODO 時間檢查
     
@@ -175,7 +175,7 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:
         if error_msg:
             print(f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
             if not cron_mode:
-                push_message(to=event_id, message=f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
+                reply_message(reply_token=reply_token, message=f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
             return
     result = get_today_report(report_type)
     # 組裝 Flex Message
@@ -185,10 +185,14 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:
     flex_copy["hero"]["url"] = result.url
     flex_copy["body"]["contents"][0]["text"] = report_dict[report_type]
     flex_copy["body"]["contents"][1]["text"] = result.msg
-    push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【股票報告】{report_dict[report_type]}")
+    # 優先使用 reply_msg
+    if reply_token:
+        reply_message(reply_token=reply_token, flex_msg=flex_copy, alt_text=f"【股票報告】{report_dict[report_type]}")
+    else:
+        push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【股票報告】{report_dict[report_type]}")
     return
 
-def hao_report(event_id:str, cron_mode:bool = True):
+def hao_report(event_id:str, cron_mode:bool = True, reply_token:str = None):
     """Send Hao report to event"""
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d')
     success, data, err_msg = get_today_hao_report()
@@ -201,8 +205,12 @@ def hao_report(event_id:str, cron_mode:bool = True):
         flex_copy["hero"]["action"]["uri"] = data.vid_url
         flex_copy["body"]["contents"][1]["text"] = contents[0]
         flex_copy["body"]["contents"][4]["text"] = contents[1]
-        push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【游庭皓的財經皓角】報告")
+        # 優先使用 reply_msg
+        if reply_token:
+            reply_message(reply_token=reply_token, flex_msg=flex_copy, alt_text=f"【游庭皓的財經皓角】報告")
+        else:
+            push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【游庭皓的財經皓角】報告")
     else:
         if not cron_mode:
-            push_message(to=event_id, message=f"財金皓角 daily report 查詢失敗，錯誤訊息: {err_msg}")
+            reply_message(reply_token=reply_token, message=f"財金皓角 daily report 查詢失敗，錯誤訊息: {err_msg}")
     return 

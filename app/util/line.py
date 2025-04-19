@@ -2,14 +2,33 @@ from linebot.models import TextSendMessage, Event, ImageSendMessage, FlexSendMes
 
 from app.core.config import line_bot
 
-def reply_message(reply_token:str, message:str):
+def reply_message(reply_token:str, message:str=None, img_url:str=None, flex_msg:dict=None, alt_text:str="股票報告"):
     """Reply message to user
 
     Args:
         reply_token (str): Reply token
         message (str): Message to reply
+        image_url (str): Image URL to push
+        flex_msg (dict): Flex message to push
+        alt_text (str): Alt text for Flex message
     """
-    line_bot.LINE_BOT_API.reply_message(reply_token, TextSendMessage(text=message))
+    messages = []
+    
+    # 如果有文字訊息
+    if message:
+        messages.append(TextSendMessage(text=message))
+    
+    # 如果有圖片訊息
+    if img_url:
+        messages.append(ImageSendMessage(original_content_url=img_url, preview_image_url=img_url))
+
+    # 推送訊息
+    if messages:
+        line_bot.LINE_BOT_API.reply_message(reply_token, messages)
+    
+    # 如果有 Flex 訊息
+    if flex_msg:
+        line_bot.LINE_BOT_API.reply_message(reply_token, FlexSendMessage(alt_text=alt_text, contents=flex_msg))
 
 def push_message(to:str, message:str=None, img_url:str=None, flex_msg:dict=None, alt_text:str="股票報告"):
     """Push message to user
@@ -18,6 +37,8 @@ def push_message(to:str, message:str=None, img_url:str=None, flex_msg:dict=None,
         to (str): User ID
         message (str): Message to push
         image_url (str): Image URL to push
+        flex_msg (dict): Flex message to push
+        alt_text (str): Alt text for Flex message
     """
     messages = []
     
