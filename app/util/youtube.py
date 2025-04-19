@@ -2,6 +2,7 @@ from app.core.config import google_api
 
 from datetime import datetime, timedelta
 import subprocess
+import base64
 import os
 import re
 
@@ -84,6 +85,29 @@ def get_youtube_subtitles(youtube_url):
         os.remove(subtitle_file)
         
         return ' '.join(line.strip() for line in content.splitlines() if line.strip())
+    else:
+        return None
+
+def get_youtube_audio(youtube_url):
+    """return youtube video audio file, Warning: need remove audio file after use"""
+    audio_file = "audio.mp3"
+    command = [
+        "yt-dlp",
+        "-f", "bestaudio",
+        "--extract-audio",
+        "--audio-format", "mp3",
+        "--audio-quality", "0",
+        "-o", audio_file,
+        youtube_url
+    ]
+    # 執行 yt-dlp 指令
+    subprocess.run(command, check=True)
+    # 確認音訊檔案是否存在
+    if os.path.exists(audio_file):
+        audio = open("audio.mp3", "rb")
+        encode_string = base64.b64encode(audio.read()).decode('utf-8')    
+        os.remove(audio_file)
+        return encode_string
     else:
         return None
 

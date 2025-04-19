@@ -1,7 +1,5 @@
 from app.core.config import openai_client
 import tiktoken
-import json
-import re
 
 client = openai_client.client
 
@@ -25,7 +23,7 @@ summary_prompt = """你是一位專業的金融專家，擁有深厚的經濟學
 認同節目中提到的抓住庫存循環的關鍵，這是成功投資的核心策略之一。
 然而，節目對於中期經濟結構性問題的探討較少，例如美國不斷上升的債務與潛在的通膨壓力，這可能在未來帶來隱患，值得投資者保持警惕。
 
-以下是節目字幕內容：{content}"""
+以下是節目內容：{content}"""
             
 def count_tokens(input_str: str, model: str="gpt-4o-mini") -> int:
     encoding = tiktoken.encoding_for_model(model)
@@ -39,6 +37,31 @@ def llm_create(prompt, model="gpt-4o-mini"):
         messages=messages,
     )
     return completion.choices[0].message.content
+
+def audio_llms_create(prompt, encode_string, model="gpt-4o-mini-audio-preview-2024-12-17"):
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "user", "content": [
+                {
+                    "type": "text",
+                    "text": prompt
+                },
+                {
+                    "type": "input_audio",
+                    "input_audio":{
+                        "data": encode_string,
+                        "format": "mp3",
+                    }
+                }
+            ]}
+        ]
+    )
+    return completion.choices[0].message.content
+
+def create_summary_audio(encode_string):
+    # 目前沒有計算 token 數量
+    return audio_llms_create(summary_prompt.format(content=""), encode_string)
 
 def create_summary(text:str):
     # 計算字串的 token 數量
