@@ -88,7 +88,7 @@ def get_youtube_subtitles(youtube_url):
     else:
         return None
 
-def get_youtube_audio(youtube_url):
+def get_youtube_audio(youtube_url, encode_string:bool=True):
     """return youtube video audio file, Warning: need remove audio file after use"""
     audio_file = "audio.mp3"
     command = [
@@ -104,10 +104,15 @@ def get_youtube_audio(youtube_url):
     subprocess.run(command, check=True)
     # 確認音訊檔案是否存在
     if os.path.exists(audio_file):
-        audio = open("audio.mp3", "rb")
-        encode_string = base64.b64encode(audio.read()).decode('utf-8')    
-        os.remove(audio_file)
-        return encode_string
+        if encode_string:
+            # 讀取音訊檔案並轉換為 base64 編碼
+            audio = open(audio_file, "rb")
+            encode_string = base64.b64encode(audio.read()).decode('utf-8')    
+            os.remove(audio_file)
+            return encode_string
+        else:
+            # 返回檔案路徑
+            return audio_file
     else:
         return None
 

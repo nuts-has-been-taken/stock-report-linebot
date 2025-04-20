@@ -59,6 +59,15 @@ def audio_llms_create(prompt, encode_string, model="gpt-4o-mini-audio-preview-20
     )
     return completion.choices[0].message.content
 
+def audio_transcript_subtitle(audio_file):
+    # 使用 OpenAI 的 Whisper 模型進行音訊轉錄
+    transcript = client.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file,
+        language="zh-tw"
+    )
+    return transcript["text"]
+
 def create_summary_audio(encode_string):
     # 目前沒有計算 token 數量
     return audio_llms_create(summary_prompt.format(content=""), encode_string)

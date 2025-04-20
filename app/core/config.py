@@ -36,6 +36,7 @@ google_api = GoogleAPI()
 class OpenAIClient(CommonConfig):
     OPENAI_API_KEY: str
     AUDIO_MODE: bool = False
+    TRANS_FIRST: bool = False
     
     @model_validator(mode="after")
     def init_openai(self):
