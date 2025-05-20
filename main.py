@@ -9,6 +9,7 @@ from app.model.model import Base
 
 from app.router.youtube import router as youtube_router
 from app.router.line import router as line_router
+from app.router.report import router as report_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +25,7 @@ app = FastAPI(lifespan=lifespan)
 # Add Routers
 app.include_router(youtube_router, prefix="/youtube", tags=["YouTube"])
 app.include_router(line_router, prefix="/line", tags=["Line"])
+app.include_router(report_router, prefix="/report", tags=["Report"])
 
 # Line webhook
 handler = line_bot.LINE_WEBHOOK
