@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from googleapiclient.discovery import build
 from openai import OpenAI
+from minio import Minio
 
 class CommonConfig(BaseSettings):
     class Config:
@@ -55,3 +56,22 @@ class Postgres(CommonConfig):
         return self
 
 postgress_db = Postgres()
+
+class MinIOClient(CommonConfig):
+    MINIO_ENDPOINT: str = "localhost"
+    MINIO_PORT: int = 9000
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_USE_SSL: bool = False
+
+    @model_validator(mode="after")
+    def init_minio(self):
+        self.client = Minio(
+            endpoint=self.MINIO_ENDPOINT,
+            access_key=self.MINIO_ACCESS_KEY,
+            secret_key=self.MINIO_SECRET_KEY,
+            secure=self.MINIO_USE_SSL
+        )
+        return self
+
+minio_client = MinIOClient()

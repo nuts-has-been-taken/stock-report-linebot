@@ -1,5 +1,5 @@
 from app.core.config import postgress_db
-from app.model.model import ImgurToken
+from app.model.postgresql import ImgurToken
 
 import datetime
 

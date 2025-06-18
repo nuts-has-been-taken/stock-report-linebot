@@ -1,5 +1,5 @@
 from app.core.config import postgress_db
-from app.model.model import Report, DailyMajorInvest, DailyMargin, DailyFuture
+from app.model.postgresql import Report, DailyMajorInvest, DailyMargin, DailyFuture
 
 import datetime
 

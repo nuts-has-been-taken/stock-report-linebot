@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 
 from app.controller.line import handle_msg, handle_join, handle_follow
 from app.core.config import line_bot, postgress_db
-from app.model.model import Base
+from app.model.postgresql import Base
+from app.model.minio import ensure_buckets_exist
 
 from app.router.youtube import router as youtube_router
 from app.router.line import router as line_router
@@ -17,6 +18,9 @@ async def lifespan(app: FastAPI):
     
     # Create database table
     Base.metadata.create_all(bind=postgress_db.ENGINE)
+    # Ensure MinIO buckets exist
+    ensure_buckets_exist()
+    
     yield
     # api shut down event
 

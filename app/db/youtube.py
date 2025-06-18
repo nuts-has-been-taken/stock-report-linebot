@@ -1,5 +1,5 @@
 from app.core.config import postgress_db
-from app.model.model import YouTubeVideo
+from app.model.postgresql import YouTubeVideo
 
 import datetime
 
