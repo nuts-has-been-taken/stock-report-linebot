@@ -50,15 +50,6 @@ class DailyFuture(Base):
     investment_trust = Column(BigInteger, nullable=False)
     dealer = Column(BigInteger, nullable=False)
 
-# imgur token table
-class ImgurToken(Base):
-    __tablename__ = 'imgur_tokens'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    refresh_token = Column(String, nullable=False)
-    date = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
-    access_token = Column(String, nullable=True)
-
 class YouTubeVideo(Base):
     __tablename__ = 'youtube_videos'
 

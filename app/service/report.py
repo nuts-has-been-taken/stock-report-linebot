@@ -11,7 +11,6 @@ import json
 import os
 
 from app.db.report import save_report, get_daily_future, get_daily_major_invest, get_daily_margin, save_daily_future, save_daily_major_invest, save_daily_margin
-from app.util.imgur import upload_imgur
 from app.db.minio import upload_image
 from app.core.config import LOCAL_HOST
 

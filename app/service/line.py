@@ -36,10 +36,10 @@ daily_report_felx_msg = {
         "action": {
             "type": "uri",
             "label": "action",
-            "uri": "https://i.imgur.com/q1r8GO1.png"
+            "uri": "https://carbarcha.online/img/?bucket=reports&object_name=2025-05-20_major.png"
         },
         "aspectRatio": "20:13",
-        "url": "https://i.imgur.com/q1r8GO1.png"
+        "url": "https://carbarcha.online/img/?bucket=reports&object_name=2025-05-20_major.png"
     },
     "body": {
         "type": "box",
@@ -98,14 +98,14 @@ hao_report_flex_msg = {
     },
     "hero": {
         "type": "image",
-        "url": "https://i.imgur.com/q1r8GO1.png",
+        "url": "https://carbarcha.online/img/?bucket=reports&object_name=2025-05-20_major.png",
         "aspectMode": "fit",
         "aspectRatio": "17.7:10",
         "size": "full",
         "action": {
             "type": "uri",
             "label": "action",
-            "uri": "https://i.imgur.com/q1r8GO1.png"
+            "uri": "https://carbarcha.online/img/?bucket=reports&object_name=2025-05-20_major.png"
         },
     },
     "body": {
