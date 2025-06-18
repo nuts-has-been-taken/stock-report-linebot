@@ -11,6 +11,7 @@ from app.model.minio import ensure_buckets_exist
 from app.router.youtube import router as youtube_router
 from app.router.line import router as line_router
 from app.router.report import router as report_router
+from app.router.minio import router as minio_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,6 +31,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(youtube_router, prefix="/youtube", tags=["YouTube"])
 app.include_router(line_router, prefix="/line", tags=["Line"])
 app.include_router(report_router, prefix="/report", tags=["Report"])
+app.include_router(minio_router, prefix="/img", tags=["MinIO"])
 
 # Line webhook
 handler = line_bot.LINE_WEBHOOK

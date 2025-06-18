@@ -12,6 +12,8 @@ import os
 
 from app.db.report import save_report, get_daily_future, get_daily_major_invest, get_daily_margin, save_daily_future, save_daily_major_invest, save_daily_margin
 from app.util.imgur import upload_imgur
+from app.db.minio import upload_image
+from app.core.config import LOCAL_HOST
 
 ### 三大法人
 def get_today_major_investors(date:datetime):
@@ -130,22 +132,22 @@ def create_major_investors_report(data_number=20):
     # 創建圖片
     file_path='major_plot.png'
     create_major_investors_jpg(trading_data, file_path)
-    
-    # 上傳到 imgur
-    sucess, upload_res = upload_imgur(file_path, "major")
-    # 刪除圖片
+    # 保存到 minIO
+    sucess = upload_image(bucket_name='reports', object_name=f"{today.strftime('%Y-%m-%d')}_major.png", image_data=open(file_path, 'rb').read())
+    # 刪除圖片  
     if os.path.exists(file_path):
         os.remove(file_path)
     # 保存到資料庫
     if sucess:
         msg = f"""外資：{(trading_data.loc[trading_data.index[0], '外資']/100000000):.1f} 億\n投信：{(trading_data.loc[trading_data.index[0], '投信']/100000000):.1f} 億\n自營商：{(trading_data.loc[trading_data.index[0], '自營商']/100000000):.1f} 億"""
-        error_msg = save_report(date=trading_data.index[0], report_type='法人', msg=msg, url=upload_res)
+        url = LOCAL_HOST + f"/img/?bucket=reports&object_name={today.strftime('%Y-%m-%d')}_major.png"
+        error_msg = save_report(date=trading_data.index[0], report_type='法人', msg=msg, url=url)
         if error_msg:
             return error_msg
         else:
             return None
     else:
-        return upload_res
+        return url
 
 ### 融資融券
 def get_margin(date:datetime):

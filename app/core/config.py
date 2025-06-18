@@ -7,6 +7,8 @@ from googleapiclient.discovery import build
 from openai import OpenAI
 from minio import Minio
 
+LOCAL_HOST = "https://carbarcha.online"
+
 class CommonConfig(BaseSettings):
     class Config:
         env_file = ".env"
@@ -58,8 +60,7 @@ class Postgres(CommonConfig):
 postgress_db = Postgres()
 
 class MinIOClient(CommonConfig):
-    MINIO_ENDPOINT: str = "localhost"
-    MINIO_PORT: int = 9000
+    MINIO_ENDPOINT: str = "0.0.0.0:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_USE_SSL: bool = False

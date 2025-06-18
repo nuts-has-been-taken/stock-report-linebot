@@ -3,7 +3,7 @@ from io import BytesIO
 
 from app.core.config import minio_client
 
-def upload_image_to_minio(bucket_name: str, object_name: str, image_data: bytes, content_type: str = "image/jpeg"):
+def upload_image(bucket_name: str, object_name: str, image_data: bytes, content_type: str = "image/jpeg"):
     """
     Upload an image to MinIO.
     
@@ -11,7 +11,6 @@ def upload_image_to_minio(bucket_name: str, object_name: str, image_data: bytes,
     :param object_name: Name of the object in the bucket.
     :param image_data: Image data in bytes.
     :param content_type: Content type of the image (default is 'image/jpeg').
-    :return: None
     """
     try:
         # Ensure the bucket exists
@@ -27,10 +26,12 @@ def upload_image_to_minio(bucket_name: str, object_name: str, image_data: bytes,
             content_type=content_type
         )
         print(f"Image '{object_name}' uploaded successfully to bucket '{bucket_name}'.")
+        return True
     except S3Error as e:
         print(f"Failed to upload image: {e}")
+        return False
 
-def get_image_from_minio(bucket_name: str, object_name: str) -> bytes:
+def get_image(bucket_name: str, object_name: str) -> bytes:
     """
     Get an image from MinIO.
     
@@ -40,16 +41,16 @@ def get_image_from_minio(bucket_name: str, object_name: str) -> bytes:
     """
     try:
         response = minio_client.client.get_object(bucket_name, object_name)
-        image_data = response.read()
+        image = response.read()
         response.close()
         response.release_conn()
         print(f"Image '{object_name}' retrieved successfully from bucket '{bucket_name}'.")
-        return image_data
+        return image
     except S3Error as e:
         print(f"Failed to retrieve image: {e}")
         return None
 
-def delete_image_from_minio(bucket_name: str, object_name: str):
+def delete_image(bucket_name: str, object_name: str):
     """
     Delete an image from MinIO.
     
