@@ -1,4 +1,5 @@
 from minio.error import S3Error
+from logger import logger
 from io import BytesIO
 
 from app.core.config import minio_client
@@ -25,10 +26,10 @@ def upload_image(bucket_name: str, object_name: str, image_data: bytes, content_
             length=len(image_data),
             content_type=content_type
         )
-        print(f"Image '{object_name}' uploaded successfully to bucket '{bucket_name}'.")
+        logger.info(f"Image '{object_name}' uploaded successfully to bucket '{bucket_name}'.")
         return True
     except S3Error as e:
-        print(f"Failed to upload image: {e}")
+        logger.error(f"Failed to upload image: {e}")
         return False
 
 def get_image(bucket_name: str, object_name: str) -> bytes:
@@ -44,10 +45,10 @@ def get_image(bucket_name: str, object_name: str) -> bytes:
         image = response.read()
         response.close()
         response.release_conn()
-        print(f"Image '{object_name}' retrieved successfully from bucket '{bucket_name}'.")
+        logger.info(f"Image '{object_name}' retrieved successfully from bucket '{bucket_name}'.")
         return image
     except S3Error as e:
-        print(f"Failed to retrieve image: {e}")
+        logger.error(f"Failed to retrieve image: {e}")
         return None
 
 def delete_image(bucket_name: str, object_name: str):
@@ -60,6 +61,6 @@ def delete_image(bucket_name: str, object_name: str):
     """
     try:
         minio_client.client.remove_object(bucket_name, object_name)
-        print(f"Image '{object_name}' deleted successfully from bucket '{bucket_name}'.")
+        logger.info(f"Image '{object_name}' deleted successfully from bucket '{bucket_name}'.")
     except S3Error as e:
-        print(f"Failed to delete image: {e}")
+        logger.error(f"Failed to delete image: {e}")

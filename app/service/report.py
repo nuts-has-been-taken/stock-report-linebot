@@ -147,7 +147,7 @@ def create_major_investors_report(data_number=20):
         else:
             return None
     else:
-        return url
+        return "儲存圖片失敗"
 
 ### 融資融券
 def get_margin(date:datetime):
@@ -238,22 +238,22 @@ def create_margin_report(data_number=7):
     # 創建圖片
     file_path='margin_plot.png'
     create_margin_jpg(trading_data, file_path)
-    
-    # 上傳到 imgur
-    sucess, upload_res = upload_imgur(file_path, "margin")
+    # 保存到 minIO
+    sucess = upload_image(bucket_name='reports', object_name=f"{today.strftime('%Y-%m-%d')}_margin.png", image_data=open(file_path, 'rb').read())
     # 刪除圖片
     if os.path.exists(file_path):
         os.remove(file_path)
     # 保存到資料庫
     if sucess:
         msg = f"""融券：{(trading_data.loc[trading_data.index[0], '融券(張)'])} 張\n融資：{(trading_data.loc[trading_data.index[0], '融資金額(億)']):.1f} 億"""
-        error_msg = save_report(date=trading_data.index[0], report_type='籌碼', msg=msg, url=upload_res)
+        url = LOCAL_HOST + f"/img/?bucket=reports&object_name={today.strftime('%Y-%m-%d')}_margin.png"
+        error_msg = save_report(date=trading_data.index[0], report_type='籌碼', msg=msg, url=url)
         if error_msg:
             return error_msg
         else:
             return None
     else:
-        return upload_res
+        return "儲存圖片失敗"
 
 ### 期貨
 def get_futures(date:datetime):
@@ -372,19 +372,19 @@ def create_futures_report(data_number=7):
     # 創建圖片
     file_path='future_plot.png'
     create_futures_jpg(trading_data, file_path)
-    
-    # 上傳到 imgur
-    sucess, upload_res = upload_imgur(file_path, "futures")
+    # 保存到 minIO
+    sucess = upload_image(bucket_name='reports', object_name=f"{today.strftime('%Y-%m-%d')}_future.png", image_data=open(file_path, 'rb').read())
     # 刪除圖片
     if os.path.exists(file_path):
         os.remove(file_path)
     # 保存到資料庫
     if sucess:
         msg = f"""外資：{(trading_data.loc[trading_data.index[0], '外資'])}\n投信：{(trading_data.loc[trading_data.index[0], '投信'])}\n自營商：{(trading_data.loc[trading_data.index[0], '自營商'])}"""
-        error_msg = save_report(date=trading_data.index[0], report_type='期貨', msg=msg, url=upload_res)
+        url = LOCAL_HOST + f"/img/?bucket=reports&object_name={today.strftime('%Y-%m-%d')}_future.png"
+        error_msg = save_report(date=trading_data.index[0], report_type='期貨', msg=msg, url=url)
         if error_msg:
             return error_msg
         else:
             return None
     else:
-        return upload_res
+        return "儲存圖片失敗"

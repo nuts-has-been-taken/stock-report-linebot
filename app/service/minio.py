@@ -1,4 +1,5 @@
 from app.db.minio import get_image, delete_image
+from logger import logger
 
 def get_image_service(bucket_name: str, object_name: str) -> bytes:
     """
@@ -12,7 +13,7 @@ def get_image_service(bucket_name: str, object_name: str) -> bytes:
         image_data = get_image(bucket_name, object_name)
         return image_data
     except RuntimeError as e:
-        print(e)
+        logger.error(f"Error while getting image: {e}")
         return None
 
 def delete_image_service(bucket_name: str, object_name: str):
@@ -24,6 +25,6 @@ def delete_image_service(bucket_name: str, object_name: str):
     """
     try:
         delete_image(bucket_name, object_name)
-        print(f"Image '{object_name}' deleted successfully from bucket '{bucket_name}'.")
+        logger.info(f"Image '{object_name}' deleted successfully from bucket '{bucket_name}'.")
     except RuntimeError as e:
-        print(e)
+        logger.error(f"Error while deleting image: {e}")
