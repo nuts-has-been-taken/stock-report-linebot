@@ -60,7 +60,7 @@ def get_today_hao_report():
         return True, data, None
 
 # 下載指定時間區間內的報告
-def get_hao_report(start_date:date, end_date:date):
+def generate_hao_report(start_date:date, end_date:date):
     current_date = start_date
     all_data = []
 

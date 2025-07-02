@@ -39,14 +39,16 @@ def handle_msg(event:MessageEvent):
         if event.source.type == "user":
             reply_message(reply_token=reply_token, message=else_message)
 
-def get_daily_report(event_id: str, report_type: str, data_number: int = 20, cron_mode:bool = True):
+def handle_daily_report_broadcast(event_id: str, report_type: str, data_number: int = 20, cron_mode:bool = True):
+    """Handle request to broadcast daily report via LINE."""
     try:
         fetch_daily_report(event_id=event_id, report_type=report_type, data_number=data_number, cron_mode=cron_mode)
         return {"result": "success"}
     except Exception as e:
         return {"result": "fail", "error": str(e)}
 
-def line_hao_report(event_id: str, cron_mode: bool = True):
+def handle_hao_report_broadcast(event_id: str, cron_mode: bool = True):
+    """Handle request to broadcast hao report via LINE."""
     try:
         hao_report(event_id=event_id, cron_mode=cron_mode)
         return {"result": "success"}
