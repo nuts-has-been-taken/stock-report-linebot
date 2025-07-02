@@ -15,7 +15,7 @@ from app.db.minio import upload_image
 from app.core.config import LOCAL_HOST
 
 ### 三大法人
-def get_today_major_investors(date:datetime):
+def analyze_major_investors(date:datetime):
     
     major_invest = get_daily_major_invest(date)
     if major_invest:

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Depends
-from app.controller.minio import fetch_image, remove_image
+from app.controller.minio import handle_image_fetch, handle_image_deletion
 from app.schema.request.minio import ImageRequest
 from app.schema.response.minio import ImageDeleteResponse
 from app.schema.response.common import ErrorResponse
@@ -22,7 +22,7 @@ async def get_image(request: ImageRequest = Depends(get_image_request)):
     Returns:
         Image data in bytes or an error message.
     """
-    return await fetch_image(request.bucket, request.object_name)
+    return await handle_image_fetch(request.bucket, request.object_name)
 
 @router.delete("/", response_model=ImageDeleteResponse, responses={500: {"model": ErrorResponse}})
 async def delete_image(request: ImageRequest = Depends(get_image_request)):
@@ -36,4 +36,4 @@ async def delete_image(request: ImageRequest = Depends(get_image_request)):
     Returns:
         Success message or an error message.
     """
-    return await remove_image(request.bucket, request.object_name)
+    return await handle_image_deletion(request.bucket, request.object_name)
