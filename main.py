@@ -12,6 +12,7 @@ from app.router.youtube import router as youtube_router
 from app.router.line import router as line_router
 from app.router.report import router as report_router
 from app.router.minio import router as minio_router
+from app.schema.response.common import HealthCheckResponse
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,9 +37,9 @@ app.include_router(minio_router, prefix="/img", tags=["MinIO"])
 # Line webhook
 handler = line_bot.LINE_WEBHOOK
 
-@app.get("/")
+@app.get("/", response_model=HealthCheckResponse)
 def read_root():
-    return {"message": "Stock line bot service is running!"}
+    return HealthCheckResponse(message="Stock line bot service is running!")
 
 @app.post("/callback")
 async def callback(request: Request):

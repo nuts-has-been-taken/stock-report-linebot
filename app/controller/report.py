@@ -1,8 +1,9 @@
 from fastapi import HTTPException
 from datetime import datetime
 from app.service.report import get_today_major_investors
+from app.schema.response.report import MajorInvestorsResponse
 
-async def get_major_investors(date: str):
+async def get_major_investors(date: str) -> MajorInvestorsResponse:
     """Fetch major investors data for a specific date."""
     try:
         parsed_date = datetime.strptime(date, '%Y-%m-%d')
@@ -11,6 +12,6 @@ async def get_major_investors(date: str):
 
     data = get_today_major_investors(parsed_date)
     if data:
-        return data
+        return MajorInvestorsResponse(**data)
     else:
         raise HTTPException(status_code=404, detail="No data available for the given date")

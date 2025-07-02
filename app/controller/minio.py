@@ -1,5 +1,7 @@
 from fastapi import HTTPException, Response
+from datetime import datetime
 from app.service.minio import get_image_service, delete_image_service
+from app.schema.response.minio import ImageDeleteResponse
 
 async def fetch_image(bucket: str, object_name: str):
     """
@@ -29,7 +31,7 @@ async def fetch_image(bucket: str, object_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-async def remove_image(bucket: str, object_name: str):
+async def remove_image(bucket: str, object_name: str) -> ImageDeleteResponse:
     """
     Controller function to delete an image from MinIO.
     
@@ -42,6 +44,12 @@ async def remove_image(bucket: str, object_name: str):
     """
     try:
         delete_image_service(bucket, object_name)
-        return {"message": f"Image '{object_name}' deleted successfully from bucket '{bucket}'"}
+        return ImageDeleteResponse(
+            success=True,
+            message=f"Image '{object_name}' deleted successfully from bucket '{bucket}'",
+            bucket=bucket,
+            object_name=object_name,
+            deleted_at=datetime.now()
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

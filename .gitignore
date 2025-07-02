@@ -2,6 +2,7 @@ nginx-ssl/
 docker-compose.yml
 *.ipynb
 minio/
+CLAUDE.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
