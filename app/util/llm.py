@@ -1,4 +1,5 @@
 from app.core.config import openai_client
+from logger import logger
 import tiktoken
 
 client = openai_client.client
@@ -95,7 +96,7 @@ def create_summary(text:str):
         
         # 將每組 tokens 解碼為文字並進行 summary
         summaries = []
-        print(f"Subtitle tokens:{token_count}, split to {len(chunks)} chunks")
+        logger.debug(f"Subtitle tokens:{token_count}, split to {len(chunks)} chunks")
         for chunk in chunks:
             chunk_text = encoding.decode(chunk)
             summary = llm_create(summary_prompt.format(content=chunk_text))

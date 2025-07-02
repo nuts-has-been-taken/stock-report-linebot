@@ -1,4 +1,5 @@
 from app.core.config import google_api
+from logger import logger
 
 from datetime import datetime, timedelta
 import subprocess
@@ -141,8 +142,8 @@ def search_channel_id(channel_name):
     if 'items' in response and len(response['items']) > 0:
         channel_id = response['items'][0]['snippet']['channelId']
         channel_name = response['items'][0]['snippet']['title']
-        print(f"Channel Name: {channel_name}")
-        print(f"Channel ID: {channel_id}")
+        logger.debug(f"Channel Name: {channel_name}")
+        logger.debug(f"Channel ID: {channel_id}")
         return channel_id, channel_name
     else:
         return None

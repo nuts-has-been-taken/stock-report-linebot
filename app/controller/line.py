@@ -13,7 +13,7 @@ def handle_msg(event:MessageEvent):
     
     event_type, event_id = get_event_id(event)
     reply_token = get_reply_token(event)
-    print(f"Event_type: {event_type}, Event_id: {event_id}, Text: {event.message.text}")
+    logger.info(f"Event_type: {event_type}, Event_id: {event_id}, Text: {event.message.text}")
     # 日報
     if event.message.text in ["法人", "籌碼", "期貨"]:
         # reply_message(reply_token=reply_token, message="請稍等，正在查詢中...")
@@ -64,7 +64,7 @@ def handle_join(event:JoinEvent):
     """_, event_id = get_event_id(event)
     push_message(to=event_id, message=welcome_message)"""
     event_type, event_id = get_event_id(event)
-    print(f"Event_type: {event_type}, Event_id: {event_id}")
+    logger.info(f"Event_type: {event_type}, Event_id: {event_id}")
         
 def handle_follow(event:FollowEvent):
     """Handle follow event from Line bot
@@ -74,7 +74,7 @@ def handle_follow(event:FollowEvent):
     """
     # push_message(to=event_id, message=welcome_message)
     event_type, event_id = get_event_id(event)
-    print(f"Event_type: {event_type}, Event_id: {event_id}")
+    logger.info(f"Event_type: {event_type}, Event_id: {event_id}")
 
 else_message = "請輸入正確指令，或輸入'幫助'查看指令"
 

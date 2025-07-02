@@ -1,4 +1,6 @@
 
+from logger import logger
+
 from app.util.line import push_message, reply_message
 from app.db.report import get_today_report
 from app.service.report import create_major_investors_report, create_futures_report, create_margin_report
@@ -165,7 +167,7 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:
     
     result = get_today_report(report_type)
     if not result:
-        print(f"====生成{report_type}報告====")
+        logger.info(f"====生成{report_type}報告====")
         if report_type == "法人":
             error_msg = create_major_investors_report(data_number)
         elif report_type == "籌碼":
@@ -173,7 +175,7 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:
         elif report_type == "期貨":
             error_msg = create_futures_report(data_number)
         if error_msg:
-            print(f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
+            logger.error(f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
             if not cron_mode:
                 reply_message(reply_token=reply_token, message=f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
             return

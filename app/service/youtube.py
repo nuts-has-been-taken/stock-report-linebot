@@ -2,6 +2,7 @@ from app.db.youtube import save_youtube_vid, get_youtube_vid
 from app.util.youtube import get_latest_live_stream, get_live_stream, get_youtube_subtitles, get_youtube_img, get_youtube_audio
 from app.util.llm import create_summary, create_summary_audio, audio_transcript_subtitle
 from app.core.config import openai_client
+from logger import logger
 
 from datetime import date, timedelta
 import os
@@ -22,15 +23,15 @@ def process_youtube_data(channel_id, current_date):
             if TRANS_FIRST:
                 # 先轉錄音訊後進行 summary
                 audio = get_youtube_audio(youtube_url=url, encode_string=False)
-                print("使用音訊進行轉錄")
+                logger.info("使用音訊進行轉錄")
                 transcript = audio_transcript_subtitle(audio)
                 os.remove(audio) # 刪除音訊檔案
-                print("轉錄完成，開始進行 summary")
+                logger.info("轉錄完成，開始進行 summary")
                 summary = create_summary(transcript)
             elif AUDIO_MODE:
                 # 直接使用音訊進行 summary
                 audio = get_youtube_audio(youtube_url=url, encode_string=True)
-                print("使用音訊進行 summary")
+                logger.info("使用音訊進行 summary")
                 summary = create_summary_audio(audio)
             else:
                 return None, "字幕未上傳"

@@ -1,5 +1,6 @@
 from app.core.config import postgress_db
 from app.model.postgresql import Report, DailyMajorInvest, DailyMargin, DailyFuture
+from logger import logger
 
 import datetime
 
@@ -27,7 +28,7 @@ def save_daily_major_invest(date, foreign_investors, investment_trust, dealer):
         return None
     except Exception as e:
         session.rollback()
-        print(f"Error saving {date} DailyMajorInvest: {e}")
+        logger.error(f"Error saving {date} DailyMajorInvest: {e}")
         return e
     finally:
         session.close()
@@ -46,7 +47,7 @@ def get_daily_major_invest(date):
         result = session.query(DailyMajorInvest).filter(DailyMajorInvest.date == date).first()
         return result
     except Exception as e:
-        print(f"Error fetching DailyMajorInvest: {e}")
+        logger.error(f"Error fetching DailyMajorInvest: {e}")
         return None
     finally:
         session.close()
@@ -71,7 +72,7 @@ def save_daily_margin(date, margin_ticket, margin_amount):
         return None
     except Exception as e:
         session.rollback()
-        print(f"Error saving {date} DailyMargin: {e}")
+        logger.error(f"Error saving {date} DailyMargin: {e}")
         return e
     finally:
         session.close()
@@ -90,7 +91,7 @@ def get_daily_margin(date):
         result = session.query(DailyMargin).filter(DailyMargin.date == date).first()
         return result
     except Exception as e:
-        print(f"Error fetching DailyMargin: {e}")
+        logger.error(f"Error fetching DailyMargin: {e}")
         return None
     finally:
         session.close()
@@ -117,7 +118,7 @@ def save_daily_future(date, foreign_investors, investment_trust, dealer):
         return None
     except Exception as e:
         session.rollback()
-        print(f"Error saving {date} DailyFuture: {e}")
+        logger.error(f"Error saving {date} DailyFuture: {e}")
         return e
     finally:
         session.close()
@@ -136,7 +137,7 @@ def get_daily_future(date):
         result = session.query(DailyFuture).filter(DailyFuture.date == date).first()
         return result
     except Exception as e:
-        print(f"Error fetching DailyFuture: {e}")
+        logger.error(f"Error fetching DailyFuture: {e}")
         return None
     finally:
         session.close()
@@ -166,7 +167,7 @@ def save_report(date, report_type, msg, url):
         return None
     except Exception as e:
         session.rollback()
-        print(f"Error saving report: {e}")
+        logger.error(f"Error saving report: {e}")
         return e
     finally:
         session.close()
