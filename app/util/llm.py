@@ -1,5 +1,6 @@
 from app.core.config import openai_client
 import tiktoken
+from typing import Optional
 
 client = openai_client.client
 
@@ -30,7 +31,7 @@ def count_tokens(input_str: str, model: str="gpt-4o-mini") -> int:
     tokens = encoding.encode(input_str)
     return len(tokens)
 
-def llm_create(prompt, model="gpt-4o-mini"):
+def llm_create(prompt: str, model: str = "gpt-4o-mini") -> str:
     messages = [{"role": "user", "content": prompt}]
     completion = client.chat.completions.create(
         model=model,
@@ -38,7 +39,7 @@ def llm_create(prompt, model="gpt-4o-mini"):
     )
     return completion.choices[0].message.content
 
-def audio_llms_create(prompt, encode_string, model="gpt-4o-mini-audio-preview-2024-12-17"):
+def audio_llms_create(prompt: str, encode_string: str, model: str = "gpt-4o-mini-audio-preview-2024-12-17") -> str:
     completion = client.chat.completions.create(
         model=model,
         messages=[
@@ -59,31 +60,33 @@ def audio_llms_create(prompt, encode_string, model="gpt-4o-mini-audio-preview-20
     )
     return completion.choices[0].message.content
 
-def audio_transcript_subtitle(audio_file):
+def audio_transcript_subtitle(audio_file) -> str:
     # 使用 OpenAI 的 Whisper 模型進行音訊轉錄
     transcript = client.audio.transcriptions.create(
         model="whisper-1",
         file=audio_file,
         language="zh-tw"
     )
-    return transcript["text"]
+    return transcript.text
 
-def create_summary_audio(encode_string):
+def create_summary_audio(encode_string: str) -> str:
     # 目前沒有計算 token 數量
     return audio_llms_create(summary_prompt.format(content=""), encode_string)
 
-def create_summary(text:str):
+def create_summary(text: str) -> str:
     # 計算字串的 token 數量
     token_count = count_tokens(text)
     
     # 如果 token 數量超過 100000，分組處理
-    if token_count > 100000:
+    from app.constants import MAX_TOKENS_PER_CHUNK
+    if token_count > MAX_TOKENS_PER_CHUNK:
         encoding = tiktoken.encoding_for_model("gpt-4o-mini")
         tokens = encoding.encode(text)
         
         # 將 tokens 分成每 100000 為一組，並保留 500 個字元的上下文
-        chunk_size = 100000
-        overlap = 500
+        from app.constants import MAX_TOKENS_PER_CHUNK, CHUNK_OVERLAP_TOKENS
+        chunk_size = MAX_TOKENS_PER_CHUNK
+        overlap = CHUNK_OVERLAP_TOKENS
         chunks = []
         start = 0
         
@@ -103,7 +106,7 @@ def create_summary(text:str):
         
         # 將所有 summary 合併為一個文字，並進行整體 summary
         combined_summary = " ".join(summaries)
-        final_summary = llm_create(summary_prompt.format(content=chunk_text))
+        final_summary = llm_create(summary_prompt.format(content=combined_summary))
         return final_summary
     else:
         # 如果 token 數量未超過 100000，直接進行 summary
