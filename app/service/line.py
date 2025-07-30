@@ -7,6 +7,7 @@ from app.service.youtube import get_today_hao_report
 from datetime import datetime
 import copy
 import re
+from typing import Optional
 
 daily_report_felx_msg = {
     "type": "bubble",
@@ -69,11 +70,9 @@ daily_report_felx_msg = {
     }
 }
 
-report_dict = {
-    "法人":"三大法人買賣超變化",
-    "籌碼":"融資融券餘額變化",
-    "期貨":"三大法人期貨未平倉口數"
-}
+from app.constants import REPORT_TYPES
+
+report_dict = REPORT_TYPES
 
 hao_report_flex_msg = {
     "type": "bubble",
@@ -159,7 +158,13 @@ hao_report_flex_msg = {
     }
 }
 
-def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:bool = False, reply_token:str = None):
+def fetch_daily_report(
+    event_id: str, 
+    report_type: str, 
+    data_number: int = 20, 
+    cron_mode: bool = False, 
+    reply_token: Optional[str] = None
+) -> None:
     """Send daily report to event"""
     # TODO 時間檢查
     
@@ -174,10 +179,16 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:
             error_msg = create_futures_report(data_number)
         if error_msg:
             print(f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
-            if not cron_mode:
+            if not cron_mode and reply_token:
                 reply_message(reply_token=reply_token, message=f"{report_type} daily report 查詢失敗，錯誤訊息: {error_msg}")
             return
     result = get_today_report(report_type)
+    if not result:
+        print(f"No report found for {report_type}")
+        if not cron_mode and reply_token:
+            reply_message(reply_token=reply_token, message=f"無法找到 {report_type} 報告")
+        return
+    
     # 組裝 Flex Message
     flex_copy = copy.deepcopy(daily_report_felx_msg)
     flex_copy["header"]["contents"][0]["text"] = f"【股票報告】 {result.date.strftime('%Y-%m-%d')}"
@@ -192,25 +203,33 @@ def fetch_daily_report(event_id:str, report_type:str, data_number=20, cron_mode:
         push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【股票報告】{report_dict[report_type]}")
     return
 
-def hao_report(event_id:str, cron_mode:bool = True, reply_token:str = None):
+def hao_report(
+    event_id: str, 
+    cron_mode: bool = True, 
+    reply_token: Optional[str] = None
+) -> None:
     """Send Hao report to event"""
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d')
     success, data, err_msg = get_today_hao_report()
-    if success:
+    if success and data:
         sections = re.split(r'### .+?：', data.vid_summary)
         contents = [section.strip() for section in sections if section.strip()]
         flex_copy = copy.deepcopy(hao_report_flex_msg)
         flex_copy["header"]["contents"][0]["text"] = f"【游庭皓的財經皓角】 {today} 報告"
         flex_copy["hero"]["url"] = data.vid_img
         flex_copy["hero"]["action"]["uri"] = data.vid_url
-        flex_copy["body"]["contents"][1]["text"] = contents[0]
-        flex_copy["body"]["contents"][4]["text"] = contents[1]
+        if len(contents) >= 2:
+            flex_copy["body"]["contents"][1]["text"] = contents[0]
+            flex_copy["body"]["contents"][4]["text"] = contents[1]
+        else:
+            flex_copy["body"]["contents"][1]["text"] = "摘要處理中..."
+            flex_copy["body"]["contents"][4]["text"] = "AI 分析處理中..."
         # 優先使用 reply_msg
         if reply_token:
             reply_message(reply_token=reply_token, flex_msg=flex_copy, alt_text=f"【游庭皓的財經皓角】報告")
         else:
             push_message(to=event_id, flex_msg=flex_copy, alt_text=f"【游庭皓的財經皓角】報告")
     else:
-        if not cron_mode:
+        if not cron_mode and reply_token:
             reply_message(reply_token=reply_token, message=f"財金皓角 daily report 查詢失敗，錯誤訊息: {err_msg}")
-    return 
+    return    

@@ -1,5 +1,7 @@
 from app.core.config import google_api
-
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 import subprocess
 import base64
@@ -8,7 +10,28 @@ import re
 
 youtube = google_api.YOUTUBE
 
-def get_latest_live_stream(channel_id):
+@contextmanager
+def temp_file_cleanup(file_path: str):
+    """Context manager for temporary file cleanup."""
+    try:
+        yield file_path
+    finally:
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except OSError as e:
+                print(f"Warning: Could not remove temporary file {file_path}: {e}")
+
+def get_latest_live_stream(channel_id: str):
+    """
+    獲取指定頻道的最新直播
+    
+    Args:
+        channel_id (str): YouTube 頻道 ID
+    
+    Returns:
+        tuple: (title, url, date) or (None, None, None) if not found
+    """
     request = youtube.search().list(
         part="snippet",
         channelId=channel_id,
@@ -31,7 +54,17 @@ def get_latest_live_stream(channel_id):
     else:
         return None, None, None
 
-def get_live_stream(channel_id, date):
+def get_live_stream(channel_id: str, date):
+    """
+    獲取指定頻道在指定日期的直播
+    
+    Args:
+        channel_id (str): YouTube 頻道 ID
+        date (datetime.date): 指定的日期
+    
+    Returns:
+        tuple: (title, url, date) or (None, None, None) if not found
+    """
     
     start_datetime = datetime.combine(date, datetime.min.time())
     end_datetime = start_datetime + timedelta(days=1)
@@ -60,8 +93,19 @@ def get_live_stream(channel_id, date):
     else:
         return None, None, None
 
-def get_youtube_subtitles(youtube_url):
-    subtitle_file = "subtitle.zh-TW.vtt"
+def get_youtube_subtitles(youtube_url: str) -> Optional[str]:
+    """
+    使用 yt-dlp 下載 YouTube 影片的字幕
+    
+    Args:
+        youtube_url (str): YouTube 影片的 URL
+    
+    Returns:
+        Optional[str]: 字幕內容，如果沒有字幕則返回 None
+    """
+    from app.constants import SUBTITLE_FILE_PATTERN, SUBTITLE_DOWNLOAD_TIMEOUT
+    subtitle_file = SUBTITLE_FILE_PATTERN
+    
     command = [
         "yt-dlp",
         "--write-subs",
@@ -70,27 +114,37 @@ def get_youtube_subtitles(youtube_url):
         "--skip-download",
         youtube_url
     ]
-    # 執行 yt-dlp 指令
-    subprocess.run(command, check=True)
     
-    # 確認字幕檔案是否存在
-    if os.path.exists(subtitle_file):
-        # 讀取字幕內容
-        with open(subtitle_file, "r", encoding="utf-8") as file:
-            content = file.read()
-        content = re.sub(r'\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}', '', content)
-        content = re.sub(r'(WEBVTT|Kind:.*|Language:.*)', '', content)
-        
-        # 刪除字幕檔案以清理空間
-        os.remove(subtitle_file)
-        
-        return ' '.join(line.strip() for line in content.splitlines() if line.strip())
-    else:
+    try:
+        with temp_file_cleanup(subtitle_file):
+            subprocess.run(command, check=True, timeout=SUBTITLE_DOWNLOAD_TIMEOUT)
+            
+            if os.path.exists(subtitle_file):
+                with open(subtitle_file, "r", encoding="utf-8") as file:
+                    content = file.read()
+                content = re.sub(r'\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}', '', content)
+                content = re.sub(r'(WEBVTT|Kind:.*|Language:.*)', '', content)
+                
+                return ' '.join(line.strip() for line in content.splitlines() if line.strip())
+        return None
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
+        print(f"Error downloading subtitles: {e}")
         return None
 
-def get_youtube_audio(youtube_url, encode_string:bool=True):
-    """return youtube video audio file, Warning: need remove audio file after use"""
-    audio_file = "audio.mp3"
+def get_youtube_audio(youtube_url: str, encode_string: bool = True) -> Optional[str]:
+    """
+    使用 yt-dlp 下載 YouTube 影片的音訊
+    
+    Args:
+        youtube_url (str): YouTube 影片的 URL
+        encode_string (bool): 是否將音訊檔案編碼為 base64 字串
+    
+    Returns:
+        Optional[str]: 如果 encode_string 為 True，返回 base64 編碼的音訊字串；否則返回音訊檔案路徑
+    """
+    from app.constants import AUDIO_FILE_PATTERN, AUDIO_DOWNLOAD_TIMEOUT
+    audio_file = AUDIO_FILE_PATTERN
+    
     command = [
         "yt-dlp",
         "-f", "bestaudio",
@@ -100,37 +154,67 @@ def get_youtube_audio(youtube_url, encode_string:bool=True):
         "-o", audio_file,
         youtube_url
     ]
-    # 執行 yt-dlp 指令
-    subprocess.run(command, check=True)
-    # 確認音訊檔案是否存在
-    if os.path.exists(audio_file):
-        if encode_string:
-            # 讀取音訊檔案並轉換為 base64 編碼
-            audio = open(audio_file, "rb")
-            encode_string = base64.b64encode(audio.read()).decode('utf-8')    
-            os.remove(audio_file)
-            return encode_string
-        else:
-            # 返回檔案路徑
-            return audio_file
-    else:
+    
+    try:
+        subprocess.run(command, check=True, timeout=AUDIO_DOWNLOAD_TIMEOUT)
+        
+        if os.path.exists(audio_file):
+            if encode_string:
+                try:
+                    with open(audio_file, "rb") as audio:
+                        encoded_string = base64.b64encode(audio.read()).decode('utf-8')
+                    os.remove(audio_file)
+                    return encoded_string
+                except (OSError, IOError) as e:
+                    print(f"Error processing audio file: {e}")
+                    if os.path.exists(audio_file):
+                        os.remove(audio_file)
+                    return None
+            else:
+                return audio_file
+        return None
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        print(f"Error downloading audio: {e}")
+        if os.path.exists(audio_file):
+            try:
+                os.remove(audio_file)
+            except OSError:
+                pass
         return None
 
-def get_youtube_img(youtube_url):
+def get_youtube_img(youtube_url: str) -> Optional[str]:
     """return youtube video thumbnail url"""
+    from app.constants import THUMBNAIL_TIMEOUT
     command = [
         "yt-dlp",
         "--get-thumbnail",
         youtube_url
     ]
-    result = subprocess.run(command, capture_output=True)
-    if result.returncode == 0:
-        return result.stdout.decode('utf-8').strip()
-    else:
+    try:
+        result = subprocess.run(command, capture_output=True, timeout=THUMBNAIL_TIMEOUT, text=True)
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            print(f"Error getting thumbnail: {result.stderr}")
+            return None
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+        print(f"Error getting thumbnail: {e}")
         return None
 
-# 查找頻道&id
-def search_channel_id(channel_name):
+def get_youtube_thumbnail(youtube_url: str) -> Optional[str]:
+    """Alias for get_youtube_img for consistency"""
+    return get_youtube_img(youtube_url)
+
+def search_channel_id(channel_name: str):
+    """
+    根據頻道名稱搜尋頻道 ID
+    
+    Args:
+        channel_name (str): YouTube 頻道名稱
+    
+    Returns:
+        tuple: (channel_id, channel_name) or None if not found
+    """
     response = youtube.search().list(
         part='snippet',
         q=channel_name,

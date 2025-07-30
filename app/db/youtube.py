@@ -1,11 +1,27 @@
 from app.core.config import postgress_db
 from app.model.postgresql import YouTubeVideo
+from contextlib import contextmanager
+from typing import Generator, Optional
+from sqlalchemy.orm import Session as SQLSession
 
 import datetime
 
 Session = postgress_db.SESSION
 
-def get_youtube_vid(channel_id:str, date: datetime.date):
+@contextmanager
+def get_db_session() -> Generator[SQLSession, None, None]:
+    """Database session context manager for proper resource cleanup."""
+    session = postgress_db.SESSION()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+def get_youtube_vid(channel_id: str, date: datetime.date) -> Optional[YouTubeVideo]:
     """Get report from database for a specific date.
     
     Args:
@@ -13,11 +29,13 @@ def get_youtube_vid(channel_id:str, date: datetime.date):
         date (datetime.date): The date for which to retrieve the data.
     
     Returns:
-        dict: YouTubeVideo data.
+        Optional[YouTubeVideo]: YouTubeVideo data or None if not found.
     """
-    session = Session()
-    try:
-        result = session.query(YouTubeVideo).filter(YouTubeVideo.date == date, YouTubeVideo.channel_id == channel_id).first()
+    with get_db_session() as session:
+        result = session.query(YouTubeVideo).filter(
+            YouTubeVideo.date == date, 
+            YouTubeVideo.channel_id == channel_id
+        ).first()
         if result:
             return_res = YouTubeVideo(
                 channel_name=result.channel_name,
@@ -29,12 +47,17 @@ def get_youtube_vid(channel_id:str, date: datetime.date):
                 vid_img=result.vid_img
             )
             return return_res
-    except Exception as e:
-        raise e
-    finally:
-        session.close()
+        return None
 
-def save_youtube_vid(channel_name: str, channel_id: str, date: datetime.date, vid_name: str, vid_url: str, vid_summary: str = None, vid_img: str = None):
+def save_youtube_vid(
+    channel_name: str, 
+    channel_id: str, 
+    date: datetime.date, 
+    vid_name: str, 
+    vid_url: str, 
+    vid_summary: Optional[str] = None, 
+    vid_img: Optional[str] = None
+) -> YouTubeVideo:
     """Save a YouTube video record to the database.
 
     Args:
