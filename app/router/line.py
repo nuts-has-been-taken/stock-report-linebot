@@ -20,3 +20,20 @@ def create_daily_report(event_id: str = Query(..., description="Event ID for LIN
                        report_type: str = Query(..., description="Type of report (major/futures/margin/hao)"),
                        data_number: int = Query(20, ge=1, le=100, description="Number of data points to include")):
     return handle_daily_report_broadcast(event_id, report_type, data_number)
+
+# Health check and monitoring endpoints
+@router.get("/hao-report/health", responses={200: {"model": dict}})
+def hao_report_health_check():
+    """Get health status of the Hao report service."""
+    from app.service.hao_report_service import hao_report_service
+    return hao_report_service.health_check()
+
+@router.get("/hao-report/metrics", responses={200: {"model": dict}})
+def hao_report_metrics():
+    """Get metrics for the Hao report service."""
+    from app.service.hao_report_service import hao_report_service
+    return {
+        "service_metrics": hao_report_service.metrics.get_metrics(),
+        "circuit_breaker_state": hao_report_service.circuit_breaker.state,
+        "is_healthy": hao_report_service.is_healthy
+    }

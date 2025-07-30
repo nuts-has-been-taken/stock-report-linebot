@@ -1,4 +1,6 @@
 from app.core.config import google_api
+from app.util.resource_manager import rate_limited, youtube_rate_limiter, circuit_breaker, CircuitBreaker, temporary_file_cleanup
+from app.util.exceptions import YouTubeAPIError, AudioProcessingError
 from logger import logger
 
 from datetime import datetime, timedelta
@@ -6,60 +8,141 @@ import subprocess
 import base64
 import os
 import re
+from typing import Tuple, Optional
 
 youtube = google_api.YOUTUBE
 
-def get_latest_live_stream(channel_id):
-    request = youtube.search().list(
-        part="snippet",
-        channelId=channel_id,
-        eventType="completed",
-        type="video",
-        order="date",
-        maxResults=1
-    )
-    
-    response = request.execute()
-    
-    if response['items']:
-        video = response['items'][0]
-        video_id = video['id']['videoId']
-        title = video['snippet']['title']
-        date = video['snippet']['publishTime']
-        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").date()
-        url = f'https://www.youtube.com/watch?v={video_id}'
-        return title, url, date
-    else:
-        return None, None, None
+# Circuit breakers for different operations
+youtube_search_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=300)
+audio_download_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=180)
 
-def get_live_stream(channel_id, date):
+@rate_limited(youtube_rate_limiter)
+@circuit_breaker(youtube_search_breaker)
+def get_latest_live_stream(channel_id: str) -> Tuple[Optional[str], Optional[str], Optional[datetime.date]]:
+    """
+    Get the latest completed live stream from a YouTube channel.
     
-    start_datetime = datetime.combine(date, datetime.min.time())
-    end_datetime = start_datetime + timedelta(days=1)
-    start_date = start_datetime.isoformat("T") + "Z"
-    end_date = end_datetime.isoformat("T") + "Z"
-    request = youtube.search().list(
-        part="snippet",
-        channelId=channel_id,
-        eventType="completed",
-        type="video",
-        order="date",
-        publishedAfter=start_date,
-        publishedBefore=end_date,
-        maxResults=1
-    )
-    
-    response = request.execute()
-    if response['items']:
+    Args:
+        channel_id: YouTube channel ID
+        
+    Returns:
+        Tuple of (title, url, date) or (None, None, None) if no video found
+        
+    Raises:
+        YouTubeAPIError: When YouTube API call fails
+    """
+    try:
+        logger.debug(f"Searching for latest live stream on channel {channel_id}")
+        
+        request = youtube.search().list(
+            part="snippet",
+            channelId=channel_id,
+            eventType="completed",
+            type="video",
+            order="date",
+            maxResults=1
+        )
+        
+        response = request.execute()
+        
+        if not response.get('items'):
+            logger.info(f"No completed live streams found for channel {channel_id}")
+            return None, None, None
+        
         video = response['items'][0]
         video_id = video['id']['videoId']
         title = video['snippet']['title']
-        date = video['snippet']['publishTime']
-        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").date()
+        publish_time = video['snippet']['publishTime']
+        
+        try:
+            date = datetime.strptime(publish_time, "%Y-%m-%dT%H:%M:%SZ").date()
+        except ValueError as e:
+            logger.error(f"Failed to parse date {publish_time}: {e}")
+            raise YouTubeAPIError(f"Invalid date format from YouTube API: {publish_time}")
+        
         url = f'https://www.youtube.com/watch?v={video_id}'
+        
+        logger.info(f"Found latest live stream: {title} from {date}")
         return title, url, date
-    else:
-        return None, None, None
+        
+    except Exception as e:
+        if 'quota' in str(e).lower():
+            logger.error(f"YouTube API quota exceeded: {e}")
+            raise YouTubeAPIError("YouTube API quota exceeded", error_code="QUOTA_EXCEEDED", cause=e)
+        elif 'invalid' in str(e).lower() and 'channel' in str(e).lower():
+            logger.error(f"Invalid channel ID {channel_id}: {e}")
+            raise YouTubeAPIError(f"Invalid channel ID: {channel_id}", error_code="INVALID_CHANNEL", cause=e)
+        else:
+            logger.error(f"YouTube API error in get_latest_live_stream: {e}")
+            raise YouTubeAPIError(f"Failed to get latest live stream: {str(e)}", cause=e)
+
+@rate_limited(youtube_rate_limiter)
+@circuit_breaker(youtube_search_breaker)
+def get_live_stream(channel_id: str, target_date: datetime.date) -> Tuple[Optional[str], Optional[str], Optional[datetime.date]]:
+    """
+    Get live stream from a specific date for a YouTube channel.
+    
+    Args:
+        channel_id: YouTube channel ID
+        target_date: The specific date to search for videos
+        
+    Returns:
+        Tuple of (title, url, date) or (None, None, None) if no video found
+        
+    Raises:
+        YouTubeAPIError: When YouTube API call fails
+    """
+    try:
+        logger.debug(f"Searching for live stream on {target_date} for channel {channel_id}")
+        
+        start_datetime = datetime.combine(target_date, datetime.min.time())
+        end_datetime = start_datetime + timedelta(days=1)
+        start_date = start_datetime.isoformat("T") + "Z"
+        end_date = end_datetime.isoformat("T") + "Z"
+        
+        request = youtube.search().list(
+            part="snippet",
+            channelId=channel_id,
+            eventType="completed",
+            type="video",
+            order="date",
+            publishedAfter=start_date,
+            publishedBefore=end_date,
+            maxResults=1
+        )
+        
+        response = request.execute()
+        
+        if not response.get('items'):
+            logger.info(f"No live streams found on {target_date} for channel {channel_id}")
+            return None, None, None
+        
+        video = response['items'][0]
+        video_id = video['id']['videoId']
+        title = video['snippet']['title']
+        publish_time = video['snippet']['publishTime']
+        
+        try:
+            parsed_date = datetime.strptime(publish_time, "%Y-%m-%dT%H:%M:%SZ").date()
+        except ValueError as e:
+            logger.error(f"Failed to parse date {publish_time}: {e}")
+            raise YouTubeAPIError(f"Invalid date format from YouTube API: {publish_time}")
+        
+        url = f'https://www.youtube.com/watch?v={video_id}'
+        
+        logger.info(f"Found live stream: {title} from {parsed_date}")
+        return title, url, parsed_date
+        
+    except Exception as e:
+        if 'quota' in str(e).lower():
+            logger.error(f"YouTube API quota exceeded: {e}")
+            raise YouTubeAPIError("YouTube API quota exceeded", error_code="QUOTA_EXCEEDED", cause=e)
+        elif 'invalid' in str(e).lower() and 'channel' in str(e).lower():
+            logger.error(f"Invalid channel ID {channel_id}: {e}")
+            raise YouTubeAPIError(f"Invalid channel ID: {channel_id}", error_code="INVALID_CHANNEL", cause=e)
+        else:
+            logger.error(f"YouTube API error in get_live_stream: {e}")
+            raise YouTubeAPIError(f"Failed to get live stream for {target_date}: {str(e)}", cause=e)
 
 def get_youtube_subtitles(youtube_url):
     subtitle_file = "subtitle.zh-TW.vtt"

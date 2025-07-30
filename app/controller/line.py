@@ -48,11 +48,21 @@ def handle_daily_report_broadcast(event_id: str, report_type: str, data_number: 
         return {"result": "fail", "error": str(e)}
 
 def handle_hao_report_broadcast(event_id: str, cron_mode: bool = True):
-    """Handle request to broadcast hao report via LINE."""
+    """Handle request to broadcast hao report via LINE with optimized service."""
+    from app.service.hao_report_service import hao_report_service
+    
     try:
-        hao_report(event_id=event_id, cron_mode=cron_mode)
-        return {"result": "success"}
+        result = hao_report_service.get_and_send_hao_report(event_id, cron_mode)
+        
+        if result["status"] == "success":
+            return {"result": "success", "metrics": result.get("metrics")}
+        elif result["status"] == "no_content":
+            return {"result": "no_content", "message": result["message"]}
+        else:
+            return {"result": "fail", "error": result.get("message", "Unknown error")}
+            
     except Exception as e:
+        logger.error(f"Unexpected error in handle_hao_report_broadcast: {str(e)}")
         return {"result": "fail", "error": str(e)}
 
 def handle_join(event:JoinEvent):

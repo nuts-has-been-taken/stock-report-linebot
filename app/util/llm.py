@@ -1,8 +1,16 @@
 from app.core.config import openai_client
+from app.util.resource_manager import rate_limited, openai_rate_limiter, circuit_breaker, CircuitBreaker
+from app.util.exceptions import OpenAIAPIError
+from app.util.retry import retry_with_backoff
 from logger import logger
 import tiktoken
+from typing import Optional
 
 client = openai_client.client
+
+# Circuit breaker for OpenAI API calls
+openai_chat_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=300)
+openai_audio_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=180)
 
 summary_prompt = """你是一位專業的金融專家，擁有深厚的經濟學、投資分析和市場趨勢研究背景。
 接下來，我將提供一段財經節目的內容，請你根據以下要求進行摘要：
@@ -31,13 +39,52 @@ def count_tokens(input_str: str, model: str="gpt-4o-mini") -> int:
     tokens = encoding.encode(input_str)
     return len(tokens)
 
-def llm_create(prompt, model="gpt-4o-mini"):
-    messages = [{"role": "user", "content": prompt}]
-    completion = client.chat.completions.create(
-        model=model,
-        messages=messages,
-    )
-    return completion.choices[0].message.content
+@rate_limited(openai_rate_limiter)
+@circuit_breaker(openai_chat_breaker)
+@retry_with_backoff(max_retries=2, backoff_factor=1.5, exceptions=(OpenAIAPIError,))
+def llm_create(prompt: str, model: str = "gpt-4o-mini") -> str:
+    """
+    Create completion using OpenAI chat model with error handling and rate limiting.
+    
+    Args:
+        prompt: The prompt to send to the model
+        model: The model to use for completion
+        
+    Returns:
+        The generated completion text
+        
+    Raises:
+        OpenAIAPIError: When OpenAI API call fails
+    """
+    try:
+        logger.debug(f"Creating LLM completion with model {model}, prompt length: {len(prompt)}")
+        
+        messages = [{"role": "user", "content": prompt}]
+        completion = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=4000,
+            timeout=30
+        )
+        
+        if not completion.choices or not completion.choices[0].message.content:
+            raise OpenAIAPIError("Empty response from OpenAI API")
+        
+        result = completion.choices[0].message.content
+        logger.debug(f"LLM completion successful, response length: {len(result)}")
+        return result
+        
+    except Exception as e:
+        error_msg = str(e).lower()
+        if 'quota' in error_msg or 'limit' in error_msg:
+            raise OpenAIAPIError(f"OpenAI API quota/rate limit exceeded: {str(e)}", error_code="QUOTA_EXCEEDED", cause=e)
+        elif 'timeout' in error_msg:
+            raise OpenAIAPIError(f"OpenAI API timeout: {str(e)}", error_code="TIMEOUT", cause=e)
+        elif 'invalid' in error_msg:
+            raise OpenAIAPIError(f"Invalid OpenAI API request: {str(e)}", error_code="INVALID_REQUEST", cause=e)
+        else:
+            raise OpenAIAPIError(f"OpenAI API error: {str(e)}", cause=e)
 
 def audio_llms_create(prompt, encode_string, model="gpt-4o-mini-audio-preview-2024-12-17"):
     completion = client.chat.completions.create(
@@ -73,39 +120,111 @@ def create_summary_audio(encode_string):
     # 目前沒有計算 token 數量
     return audio_llms_create(summary_prompt.format(content=""), encode_string)
 
-def create_summary(text:str):
-    # 計算字串的 token 數量
-    token_count = count_tokens(text)
+def create_summary(text: str) -> str:
+    """
+    Create summary from text with intelligent chunking for large texts.
     
-    # 如果 token 數量超過 100000，分組處理
-    if token_count > 100000:
-        encoding = tiktoken.encoding_for_model("gpt-4o-mini")
-        tokens = encoding.encode(text)
+    Args:
+        text: Input text to summarize
         
-        # 將 tokens 分成每 100000 為一組，並保留 500 個字元的上下文
-        chunk_size = 100000
-        overlap = 500
-        chunks = []
-        start = 0
+    Returns:
+        Generated summary
         
-        while start < len(tokens):
-            end = min(start + chunk_size, len(tokens))
-            chunk = tokens[max(0, start - overlap):end]  # 保留前 500 個字元的上下文
-            chunks.append(chunk)
-            start += chunk_size
+    Raises:
+        OpenAIAPIError: When summary generation fails
+    """
+    try:
+        if not text or not text.strip():
+            raise OpenAIAPIError("Empty text provided for summary")
         
-        # 將每組 tokens 解碼為文字並進行 summary
-        summaries = []
-        logger.debug(f"Subtitle tokens:{token_count}, split to {len(chunks)} chunks")
-        for chunk in chunks:
+        # 計算字串的 token 數量
+        token_count = count_tokens(text)
+        logger.info(f"Creating summary for text with {token_count} tokens")
+        
+        # 如果 token 數量超過 100000，分組處理
+        if token_count > 100000:
+            logger.info("Text too long, splitting into chunks for processing")
+            return _create_summary_chunked(text)
+        else:
+            # 直接處理
+            prompt = summary_prompt.format(content=text)
+            return llm_create(prompt)
+            
+    except OpenAIAPIError:
+        raise
+    except Exception as e:
+        raise OpenAIAPIError(f"Failed to create summary: {str(e)}", cause=e)
+
+
+def _create_summary_chunked(text: str) -> str:
+    """
+    Create summary for large text by chunking it.
+    
+    Args:
+        text: Large text to summarize
+        
+    Returns:
+        Combined summary from all chunks
+    """
+    encoding = tiktoken.encoding_for_model("gpt-4o-mini")
+    tokens = encoding.encode(text)
+    
+    # 將 tokens 分成每 80000 為一組（留出空間給 prompt），並保留 1000 個 token 的上下文
+    chunk_size = 80000
+    overlap = 1000
+    chunks = []
+    start = 0
+    
+    while start < len(tokens):
+        end = min(start + chunk_size, len(tokens))
+        chunk = tokens[max(0, start - overlap):end]  # 保留前 overlap 個 token 的上下文
+        chunks.append(chunk)
+        start += chunk_size
+    
+    # 將每組 tokens 解碼為文字並進行 summary
+    summaries = []
+    logger.debug(f"Text tokens: {len(tokens)}, split to {len(chunks)} chunks")
+    
+    for i, chunk in enumerate(chunks):
+        try:
             chunk_text = encoding.decode(chunk)
+            logger.debug(f"Processing chunk {i+1}/{len(chunks)}, length: {len(chunk)} tokens")
+            
             summary = llm_create(summary_prompt.format(content=chunk_text))
             summaries.append(summary)
-        
-        # 將所有 summary 合併為一個文字，並進行整體 summary
-        combined_summary = " ".join(summaries)
-        final_summary = llm_create(summary_prompt.format(content=chunk_text))
+            
+        except Exception as e:
+            logger.error(f"Failed to process chunk {i+1}: {str(e)}")
+            summaries.append(f"[處理第 {i+1} 段時發生錯誤]")
+    
+    if not summaries:
+        raise OpenAIAPIError("Failed to process any chunks")
+    
+    # 如果只有一個摘要，直接返回
+    if len(summaries) == 1:
+        return summaries[0]
+    
+    # 將所有 summary 合併為一個文字，並進行最終整合
+    combined_summary = "\n\n".join(summaries)
+    
+    # 檢查合併後的摘要長度，如果仍然太長則直接返回前幾個摘要
+    if count_tokens(combined_summary) > 80000:
+        logger.warning("Combined summary too long, returning first few summaries")
+        return "\n\n".join(summaries[:3])  # 只取前3個摘要
+    
+    # 進行最終整合摘要
+    final_prompt = f"""以下是分段摘要的內容，請將它們整合成一個連貫的財經分析報告：
+
+{combined_summary}
+
+請按照以下格式整合：
+### 重點摘要：
+### 個人看法："""
+    
+    try:
+        final_summary = llm_create(final_prompt)
         return final_summary
-    else:
-        # 如果 token 數量未超過 100000，直接進行 summary
-        return llm_create(summary_prompt.format(content=text))
+    except Exception as e:
+        logger.error(f"Failed to create final summary: {str(e)}")
+        # 如果最終整合失敗，返回合併的摘要
+        return combined_summary
